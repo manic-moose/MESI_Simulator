@@ -1,6 +1,11 @@
 #ifndef CACHELINE_H
 #define CACHELINE_H
 
+#define MODIFIED  0
+#define EXCLUSIVE 1
+#define SHARED    2
+#define INVALID   3
+
 /* @c CacheLine
  *    Class encapsulates a line in the cache,
  *    and stores the tag, LRU, dirty, MESI, and valid bits for the line.
@@ -8,6 +13,7 @@
  */
 class CacheLine {
     
+private:
     unsigned int tag;
     unsigned int tagMask;
     unsigned int lru_bits;
@@ -16,14 +22,7 @@ class CacheLine {
     unsigned int mesi_bits;
     bool dirty_bit;
     bool valid_bit;
-    
-    enum MESI_States {
-        MODIFIED = 0,
-        EXCLUSIVE,
-        SHARED,
-        INVALID
-    };
-    
+
     public:
     CacheLine (unsigned int tagLen, unsigned int lruLen, unsigned int lineNumber) {
         int i;
@@ -43,29 +42,25 @@ class CacheLine {
         mesi_bits = INVALID;
     }
     
-    bool isValidMESI(unsigned int value) const;
     
-    void setMESI(unsigned int value);
-    
-    unsigned int getMESI() const;
-    
-    bool isExclusive() const;
-    
-    bool isModified() const;
-    
-    bool isShared() const;
-    
-    bool isInvalid() const;
+    // MESI Accessors and Modifiers
+    bool isValidMESI(unsigned int value);
+    void setMESI(unsigned int value);   
+    unsigned int getMESI(void);
+    bool isExclusive(void);
+    bool isModified(void);   
+    bool isShared(void);
+    bool isInvalid(void);
     
     /* @c getLineNumber
      * @returns Returns the line number
      */
-    unsigned int getLineNumber() const;
+    unsigned int getLineNumber(void);
     
     /* @c getTag
      * @return Returns tag bits for line
      */
-    unsigned int getTag() const;
+    unsigned int getTag(void);
 
     /* @c setTag
      * @result Sets the tag bits for the line
@@ -75,7 +70,7 @@ class CacheLine {
     /* @c getLRU
      * @return Returns LRU bits for line
      */
-    unsigned int getLRU () const;
+    unsigned int getLRU (void);
     
     /* @c setLRU
      * @result Sets LRU bits for line
@@ -85,12 +80,12 @@ class CacheLine {
     /* @c isDirty
      * @return Returns state of dirty bit
      */
-    bool isDirty () const;
+    bool isDirty (void);
     
     /* @c isValid
      * @return Returns state of valid bit
      */
-    bool isValid () const;
+    bool isValid (void);
     
     /* @c setDirty
      * @param bool d

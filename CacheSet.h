@@ -6,6 +6,10 @@
 #include <math.h>
 #include <vector>
 #include "CacheLine.h"
+#include <assert.h>
+#include <map>
+
+using namespace std;
 
 /* @c CacheSet
  *    Class encapsulates a set in a cache, and contains a container
@@ -16,94 +20,19 @@
  */
 class CacheSet {
  
+private:
     vector<CacheLine*> lineArry;
     unsigned int setNumber;
-    unsigned long int readMisses;
-    unsigned long int readHits;
-    unsigned long int writeMisses;
-    unsigned long int writeHits;
-    unsigned long int streamOuts;
-    unsigned long int streamIns;
-    bool dumpMode;
     
     public:
-    CacheSet (unsigned int setNum, unsigned int linesPerSet, unsigned int tagSize) {
-        setNumber   = setNum;
-        readMisses  = 0;
-        readHits    = 0;
-        writeMisses = 0;
-        writeHits   = 0;
-        streamOuts  = 0;
-        streamIns   = 0;
-        dumpMode    = 0;
-        lineArry.reserve(linesPerSet);
-        CacheLine* newLine = NULL;
-        unsigned int lruSize = static_cast<int> (floor(ceil(log2(linesPerSet))));
-        for (int i = 0; i < linesPerSet; i++) {
-            newLine = new CacheLine(tagSize,lruSize,i);
-            lineArry.push_back(newLine);
-        }
-    }
+    CacheSet (unsigned int setNum, unsigned int linesPerSet, unsigned int tagSize);
     
     /* @c getSetNumber
      * @returns Returns this set's number
      */
     unsigned int getSetNumber(void);
     
-    /* @c getStreamOuts
-     * @returns Returns total number of stream outs
-     *          caused by dirty line eviction
-     */
-    unsigned long int const getStreamOuts(void);
-    
-    /* @c getStreamIns
-     * @returns Returns total number of stream ins
-     *          on the set.
-     */
-    unsigned long int const getStreamIns(void);
-    
-    /* @c getReadMisses
-     * @returns Returns total read misses for set
-     */
-    unsigned long int const getReadMisses(void);
-    
-    /* @c getReadHits
-     * @returns Returns total read hits for set
-     */
-    unsigned long int const getReadHits(void);
-    
-    /* @c getWriteMisses
-     * @returns Returns total write misses for set
-     */
-    unsigned long int const getWriteMisses(void);
-    
-    /* @c getWriteHits
-     * @return Returns total write hits for set
-     */
-    unsigned long int const getWriteHits(void);
-
-    /* @c read - Performs a read operation on the set, 
-     * including any required stream outs's and in's
-     * @param unsigned int tag
-     *          The tag being read from
-     * @return Returns the number of clock cycles
-     *         required for the operation.
-     *         Results in the cache line tag and status
-     *         bits being updated as required.
-     */
-    unsigned int read(unsigned int tag);
-
-    /* @c write - Performs a write operation on the set, 
-     * including any required stream outs's and in's
-     * @param unsigned int tag
-     *          The tag being write from
-     * @return Returns the number of clock cycles
-     *         required for the operation.
-     *         Results in the cache line tag and status
-     *         bits being updated as required.
-     */
-    unsigned int write(unsigned int tag);
-    
+   
     /* @c streamIn - Updates tag and status bits
     * for the line and LRU bits for the set
     * @param CacheLine* line
@@ -124,7 +53,75 @@ class CacheSet {
      */
     void updateLRU(CacheLine* line);
     
-    /* @c findLRU - Static method to determine which line
+    /* @c contains - Checks this set for the associated address
+     * @param tag
+     *          The tag being queried
+     * @result Will return true if this set contains the tag
+     *         and false otherwise
+     */
+    bool contains(unsigned int tag);
+    
+    /* @c evict - Selects a line for eviction and invalidates it
+     * @result Line will be selected using LRU policy and evicted.
+     *         Non-dirty lines will be considered before dirty lines.
+     *         If any invalid lines are in the set already, no action
+     *         is taken. If a dirty line must be evicted. Returns
+     *         the evicted line, or NULL if none evicted.
+     */
+     CacheLine* evict(void);
+    
+    /* @c selectLineForEviction - Picks a line to evict
+     * @return Returns the selected line. If any valid lines
+     * are in the set, NULL is returned.
+     */
+     CacheLine* selectLineForEviction(void);
+    
+    /* @c invalidate - Invalidates the line with the given tag
+     * @param tag
+     *          The tag associated with line to invalidate
+     * @result The selected line will be invalidated.
+     */
+    void invalidate(unsigned int tag);
+    
+    /* @c invalidate - Invalidates the line with the given tag
+     * @param line
+     *          The line to invalidate
+     * @result The selected line will be invalidated.
+     */ 
+    void invalidate(CacheLine* line);
+    
+    /* @c getLine - Gets the line associated with the tag
+     * @param tag
+     *          The tag to get
+     * @returns Returns associated line or fatal error
+     *          if line is not present
+     */
+    CacheLine* getLine(unsigned int tag);
+    
+    /* checkAndFixLRU - Verifies that the LRU bits
+     * for valid lines are monotonically increasing
+     * from 0 to n, where n is the number of valid lines.
+     * This is useful if an external event requires
+     * a line is invalidated that is not the least
+     * recently used.
+     */
+    void checkAndFixLRU(void);
+    
+    /* hasCleanLines - Returns true if this
+     * set has at least 1 valid, non-dirty line
+     * @return Returns true if 1 valid, clean line exists,
+               false otherwise
+     */
+    bool hasCleanLines(void);
+    
+    /* isFull - Returns true if there are no invalid
+     *          lines in the set.
+     * @return Returns false if all lines are valid, true
+     *         otherwise
+     */
+    bool isFull(void);
+     
+    /* @c findLRU - Method to determine which line
      * is the least recently used from a list of candidate
      * lines. Assumes at least one line is on the candidate list.
      * @param vector<CacheLine*>&
@@ -133,6 +130,16 @@ class CacheSet {
      * @return Returns the least recently used line in the list
      */
     CacheLine* findLRU (vector<CacheLine*>* candidates);
+    
+    // MESI Accessor and Modifiers
+    bool isExclusive(unsigned int tag);
+    bool isModified(unsigned int tag);
+    bool isShared(unsigned int tag);
+    bool isInvalid(unsigned int tag);
+    void setExclusive(unsigned int tag);
+    void setModified(unsigned int tag);
+    void setShared(unsigned int tag);
+    void setInvalid(unsigned int tag);
 
 };
 #endif //CACHESET_H

@@ -1,6 +1,10 @@
+#ifndef CACHE_H
+#define CACHE_H
+
 #include <iterator>
 #include <math.h>
 #include <vector>
+#include "CacheSet.h"
 
 /* @c Cache
  *    Encapsulates the logic for the cache. Includes a container
@@ -10,6 +14,8 @@
  */
 class Cache {
     
+  
+private:
     // Container for CacheSet objects
     vector<CacheSet*> setArry;
 
@@ -22,46 +28,24 @@ class Cache {
     unsigned int linesPerSet;
     unsigned int bytesPerLine;
     
-    unsigned long int totalClocks;
-    unsigned long int totalClocksNoCache;
-    
     unsigned int lruSize;
     
-    public:
-    Cache (unsigned int adxLength, unsigned int numSets, unsigned int lps, unsigned int bpl) {
-        int i;
-        linesPerSet = lps;
-        bytesPerLine = bpl;
-        totalClocks = 0;
-        totalClocksNoCache = 0;
-        addressLen = adxLength;
-        setArry.reserve(numSets);
-        lruSize          = static_cast<int> (floor(ceil(log2(lps))));
-        paragraphBitSize = static_cast<int> (floor(ceil(log2(bpl))));
-        setBitSize       = static_cast<int> (floor(ceil(log2(numSets))));
-        setBitMask = 0;
-        for (i = 0; i < setBitSize; i++) {
-            setBitMask |= (1 << i); 
-        }
-        tagSize = adxLength - paragraphBitSize - setBitSize;
-        CacheSet* newSet = NULL;
-        for (i = 0; i < numSets; i++) {
-            newSet = new CacheSet(i,lps,tagSize);
-            setArry.push_back(newSet);
-        }
-    }
+public:
+    
+    // Constructor
+    Cache (unsigned int adxLength, unsigned int numSets, unsigned int lps, unsigned int bpl);
     
     /* getTagSize - Get the width of the tag
      * @return Returns the number of bits
      * that the tag will consume for each line.
      */
-    unsigned int const getTagSize (void);
+    unsigned int getTagSize (void);
 
     /* @c getLRUSize - Get the width of LRU bits
      * @return Returns the number of bits required
      *         for LRU.
      */
-    unsigned int const getLRUSize (void);
+    unsigned int getLRUSize (void);
     
     /* @c getAdxSetNum - Get the set number associated
      * with a given address.
@@ -69,7 +53,7 @@ class Cache {
      *          The address being checked
      * @return Returns which set the address falls into.
      */
-    unsigned int const getAdxSetNum (unsigned int adx);
+    unsigned int getAdxSetNum (unsigned int adx);
     
     /* @c getTag - Get the tag associated with an address
      * @param unsigned int adx
@@ -77,26 +61,70 @@ class Cache {
      * @return Returns the value of the tag
      *         extracted from adx
      */
-    unsigned int const getTag (unsigned int adx);
+    unsigned int getTag (unsigned int adx);
     
-    /* @c read - Read from a particular address in memory
-     *           subsystem.
+    /* @c contains - Returns true of the cache contains
+     * the data at address
      * @param unsigned int adx
-     *          Memory address to read from
-     * @returns
-     *      Returns number of cycles required to 
-     *      perform read.
+     *          The address being queried
+     * @return Returns true if the cache holds
+     *         this addresses data, false otherwise.
      */
-    unsigned int read(unsigned int adx);
+    bool contains(unsigned int adx);
     
-    /* @c write - Write to a particular address in memory
-     *           subsystem.
-     * @param unsigned int adx
-     *          Memory address to write to
-     * @returns
-     *      Returns number of cycles required to 
-     *      perform write.
+    /* @c invalidate - Invalidates the cache line
+     * at address adx, if present
+     * @param adx
+                The address of the item to invalidate
+     * @result If the item is in the cache, it will
+               be invalidated, otherwise nothing occurs.
      */
-    unsigned int write(unsigned int adx);
+    void invalidate(unsigned int adx);
     
+    /* @c isFull - Checks if the set associated with the
+     *             given address is full or not
+     * @param adx
+     *          Address that maps to the set to check
+     * @return Returns true if the set has no invalid lines
+     *         available, false otherwise.
+     */
+    bool isFull(unsigned int adx);
+    
+    /* @c evictLineInSet - Invalidates a line
+     * in the cache in the set mapped to by adx.
+     * If there are any invalid lines in the set
+     * already, nothing happens and NULL is returned.
+     * @param adx
+     *          The address that maps to the set where
+     *          a line should be evicted.
+     * @return Returns a pointer to the line that has
+     *         been evicted. The pointer can be used
+     *         to stream the data back to memory if needed.
+     *         NULL is returned if no line was evicted.
+     */
+    CacheLine* evictLineInSet(unsigned int adx);
+        
+        
+    
+    /* hasCleanLines - Returns true if the set mapped by
+     * the given address has at least 1 valid, non-dirty line
+     * @param adx
+     *          Address that maps to the desired set
+     * @return Returns true if 1 valid, clean line exists,
+               false otherwise
+     */
+    bool hasCleanLines(unsigned int adx);
+    
+    // MESI Accessor and Modifiers
+    bool isExclusive(unsigned int adx);
+    bool isModified(unsigned int adx);
+    bool isShared(unsigned int adx);
+    bool isInvalid(unsigned int adx);
+    void setExclusive(unsigned int adx);
+    void setModified(unsigned int adx);
+    void setShared(unsigned int adx);
+    void setInvalid(unsigned int adx);
+
 };
+
+#endif //CACHE_H
