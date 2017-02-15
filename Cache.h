@@ -33,7 +33,7 @@ private:
 public:
     
     // Constructor
-    Cache (unsigned int adxLength, unsigned int numSets, unsigned int lps, unsigned int bpl);
+    Cache(unsigned int adxLength, unsigned int numSets, unsigned int lps, unsigned int bpl);
     
     /* getTagSize - Get the width of the tag
      * @return Returns the number of bits
