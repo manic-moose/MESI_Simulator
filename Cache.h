@@ -103,6 +103,16 @@ public:
      *         NULL is returned if no line was evicted.
      */
     CacheLine* evictLineInSet(unsigned int adx);
+
+    /* @c insertLine - Adds a line to the set
+     * that adx belongs to.
+     * @param adx
+     *          Address that is for the set to fill
+     *          the line with.
+     * @result Set will be filled with line. Assumes
+     *         there is space in the set.
+     */
+    void insertLine(unsigned int adx);
         
         
     
@@ -128,3 +138,4 @@ public:
 };
 
 #endif //CACHE_H
+

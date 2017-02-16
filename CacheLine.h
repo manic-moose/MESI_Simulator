@@ -37,8 +37,8 @@ private:
         }
         tag       = 0;
         lru_bits  = 0;
-        dirty_bit = 0;
-        valid_bit = 0;
+        dirty_bit = false;
+        valid_bit = false;
         mesi_bits = INVALID;
     }
     
@@ -111,3 +111,4 @@ private:
 
 };
 #endif //CACHELINE_H
+

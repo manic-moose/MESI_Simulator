@@ -1,5 +1,7 @@
 #include <assert.h>
 #include "CacheLine.h"
+#include <iostream>
+using namespace std;
 
 bool CacheLine::isValidMESI(unsigned int value) {
     if (value == MODIFIED) {
@@ -61,7 +63,9 @@ void CacheLine::setLRU (unsigned int l) {
 }
 
 bool CacheLine::isDirty () {
-    return dirty_bit;
+    bool dirt = dirty_bit;
+    cout << "Hmm " << dirt << endl;
+    return dirt;
 }
 
 bool CacheLine::isValid () {
@@ -79,3 +83,4 @@ void CacheLine::setValid (bool v) {
 bool CacheLine::tagMatches (unsigned int tag) {
     return (tag & tagMask) == getTag();
 }
+

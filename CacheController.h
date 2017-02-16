@@ -12,15 +12,14 @@
 
 using namespace std;
 
-class CacheController : public BusNode, public StateMachine {
+class CacheController : public BusNode {
     
 public:
     
     CacheController(unsigned int adxLength, unsigned int setCount,
-                   unsigned int linesPerSet, unsigned int bytesPerLine) : StateMachine() {
+                   unsigned int linesPerSet, unsigned int bytesPerLine) {
         cache =  new Cache(adxLength,setCount,linesPerSet,bytesPerLine);
         pendingInstructionFlag = 0;
-        completedPendingInstruction = 0;
         awaitingBusRead = 0;
     }
     
@@ -45,9 +44,8 @@ protected:
     void invalidateCacheItem(unsigned int memoryAdx);
     
     
-    Instruction* currentInstruction;   // The current LOAD/STORE instruction being handled
+    Instruction* currentInstruction;  // The current LOAD/STORE instruction being handled
     bool pendingInstructionFlag;      // Indicates that the controller is busy with an instruction
-    bool completedPendingInstruction; // Indicates the controller completed an instruction
     
     vector<BusRequest*> busReqQueue;  // Queue of bus communications to transmit
     
@@ -56,7 +54,7 @@ protected:
     bool awaitingBusRead;             // Indicates that a bus read was issued, and data has not returned
     BusRequest* dispatchedBusRead;    // A copy of the bus read sent out so that the response can be recognized on return
     
-    bool hasPendingBusRequest(void);  // Indicates there are BusRequests waiting in the bus request queue for issue to the bus
+    bool hasQueuedBusRequest(void);  // Indicates there are BusRequests waiting in the bus request queue for issue to the bus
     void issueNextBusRequest(void);   // Sets the pendingBusReqFlag and pulls the next BusReq off of nextToIssue
     
     // Checks the bus request queue for any BusRequests that have the given properties
@@ -74,3 +72,4 @@ protected:
 };
 
 #endif
+

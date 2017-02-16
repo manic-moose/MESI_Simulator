@@ -15,43 +15,53 @@ void MI_Controller::acceptBusTransaction(BusRequest* d) {
     unsigned int target    = d->targetAddress;
     unsigned int source    = d->sourceAddress;
     unsigned int memoryAdx = d->payload;
+    cout << "Accepted BUS Transaction for " << memoryAdx;
     if (awaitingBusRead) {
-        assert(dispatchedBusRead != NULL);
-        if (IS_DATA_RETURN(cmd) && (dispatchedBusRead->payload == memoryAdx)) {
+        if (dispatchedBusRead != NULL && IS_DATA_RETURN(cmd) && (dispatchedBusRead->payload == memoryAdx)) {
             // The received bus comm was a data return and the address
             // matched the address we were waiting for
+            cout << " Got the data we were waiting for" << endl;
             awaitingBusRead = 0;
         } else {
             if (cmd == BUSREAD) {
-                if ((dispatchedBusRead->payload == memoryAdx)) {
+                if (dispatchedBusRead != NULL && (dispatchedBusRead->payload == memoryAdx)) {
                     // This was a read to the same address that we are waiting for.
                     // This means that when we finally get the data value returned,
                     // we will need to not insert it into the cache
+                    cout << " Saw another read for address we want " << endl;
+                    noCacheUpdateOnRead = true;
                 } else if (cache->contains(memoryAdx)) {
                     // There was a read to an address that we maintain in the cache, and
                     // it must be invalidated. If it is dirty, it must be streamed out
+                    cout << "Invalidating " << endl;
                     invalidateCacheItem(memoryAdx);
                 }
+            } else {
+                cout << " Ignored " << endl;
+                // We can ignore the bus traffic
             }
         }
     } else if (cache->contains(memoryAdx)) {
+        cout << " Invalidating " << endl;
         // There was a read to an address that we maintain in the cache, and
         // it must be invalidated. If it is dirty, it must be streamed out
         invalidateCacheItem(memoryAdx);
+    } else {
+        cout << " Ignored " << endl;
+        // We can ignore the bus traffic
     }
 }
     
-
 void MI_Controller::Idle_Action(void) {
-    cout << "MI Controller Idle" << endl;
+    cout << "MI Controller Idle Action" << endl;
 }
 
 void MI_Controller::CheckCache_Action(void) {
-    cout << "MI Controller CheckCache" << endl;
+    cout << "MI Controller CheckCache Action" << endl;
 }
 
 void MI_Controller::BusRead_Action(void) {
-    cout << "MI Controller BusRead" << endl;
+    cout << "MI Controller BusRead Action" << endl;
     if (awaitingBusRead) {
         
     } else {
@@ -66,68 +76,110 @@ void MI_Controller::BusRead_Action(void) {
 }
 
 void MI_Controller::UpdateCache_Action(void) {
-    cout << "MI Controller UpdateCache" << endl;
+    if (noCacheUpdateOnRead) {
+        // Indicates that a bus read occurred to the same
+        // address while this node was waiting for data
+        noCacheUpdateOnRead = false;
+    } else {
+        unsigned int adx = currentInstruction->ADDRESS;
+        if (cache->isFull(adx)) {
+            // The set this address belongs to is full,
+            // so a line will need to be evicted and
+            // potentially streamed back out to memory
+            CacheLine* evictedLine = cache->evictLineInSet(adx);
+            if (evictedLine->isDirty()) {
+                // Need to write this line back to memory
+            }
+        }
+        cache->insertLine(adx);
+    }
 }
 
 void MI_Controller::Complete_Action(void) {
-    cout << "MI Controller Complete" << endl;
+    pendingInstructionFlag = false;
 }
 
-
-string MI_Controller::Idle_Transition(void) {
-    cout << "IDLE TRANS FUNCTION CALLED" << endl;
-    cout << "HAS PENDING??" << hasPendingInstruction() << endl;
-    cout << "Flag is : " << pendingInstructionFlag << endl;
+MI_Controller::STATES MI_Controller::Idle_Transition(void) {
     if (hasPendingInstruction()) {
-        cout << "CHECK CACHE?" << endl;
-        return "CheckCache";
+        return CHECKCACHE_STATE;
     } else {
-        cout << "Going back to idle still..." << endl;
-        return "Idle";
+        return IDLE_STATE;
     }
 }
 
-
-string MI_Controller::CheckCache_Transition (void) {
-    if (currentInstruction != NULL && cache->contains(currentInstruction->ADDRESS)) {
+MI_Controller::STATES MI_Controller::CheckCache_Transition (void) {
+    assert(currentInstruction != NULL);
+    unsigned int adx = currentInstruction->ADDRESS;
+    bool inCache = cache->contains(adx);
+    if (inCache) {
         // Cache Hit
-        return "Complete";
+        return IDLE_STATE;
     } else {
         // Cache Miss
-        return "BusRead";
+        return BUSREAD_STATE;
     }
 }
 
-string MI_Controller::BusRead_Transition (void) {
+MI_Controller::STATES MI_Controller::BusRead_Transition (void) {
     if (awaitingBusRead) {
-        return "BusRead";
+        return BUSREAD_STATE;
     } else {
-        if((currentInstruction != NULL) && (currentInstruction->OPCODE == STORE_CMD)) {
-            return "UpdateCache";
-        } else {
-            return "Complete";
-        }
+        assert(currentInstruction != NULL);
+        return UPDATECACHE_STATE;
     }
 }
     
-string MI_Controller::UpdateCache_Transition (void) {
-    return "Complete";
+MI_Controller::STATES MI_Controller::UpdateCache_Transition (void) {
+    return COMPLETE_STATE;
 }
 
-string MI_Controller::Complete_Transition (void) {
-    return "Idle";
+MI_Controller::STATES MI_Controller::Complete_Transition (void) {
+    return IDLE_STATE;
 }
 
 void MI_Controller::Tick(void) {
-    cout << "Tick" << endl;
-    Trigger();   
+    transitionState();
+    callActionFunction();
 }
 
-void MI_Controller::init (void) {
-    addNewState("Idle", (TransitionFunction)&MI_Controller::Idle_Transition, (ActionFunction)(NULL));   
-    addNewState("CheckCache", (TransitionFunction)&MI_Controller::CheckCache_Transition, (ActionFunction)(NULL));   
-    addNewState("BusRead", (TransitionFunction)&MI_Controller::BusRead_Transition, (ActionFunction)(NULL));   
-    addNewState("UpdateCache", (TransitionFunction)&MI_Controller::UpdateCache_Transition, (ActionFunction)(NULL));   
-    addNewState("Complete", (TransitionFunction)&MI_Controller::Complete_Transition, (ActionFunction)(NULL));   
-    initialize("Idle");
+MI_Controller::STATES MI_Controller::getNextState(void) {
+    switch(currentState) {
+        case IDLE_STATE:
+            return Idle_Transition();
+        case CHECKCACHE_STATE:
+            return CheckCache_Transition();
+        case BUSREAD_STATE:
+            return BusRead_Transition();
+        case UPDATECACHE_STATE:
+            return UpdateCache_Transition();
+        case COMPLETE_STATE:
+            return Complete_Transition();
+    }
 }
+
+void MI_Controller::transitionState(void) {
+    STATES nextState = getNextState();
+    currentState = nextState;
+    issueNextBusRequest();
+}
+
+void MI_Controller::callActionFunction(void) {
+    switch(currentState) {
+        case IDLE_STATE:
+            Idle_Action();
+            break;
+        case CHECKCACHE_STATE:
+            CheckCache_Action();
+            break;
+        case BUSREAD_STATE:
+            BusRead_Action();
+            break;
+        case UPDATECACHE_STATE:
+            UpdateCache_Action();
+            break;
+        case COMPLETE_STATE:
+             Complete_Action();
+             break;
+    }
+}
+

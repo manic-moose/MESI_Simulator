@@ -1,8 +1,6 @@
 #ifndef BUSREQUEST_H
 #define BUSREQUEST_H
 
-#include "EventData.h"
-
 struct BusRequest {
     unsigned int commandCode;
     unsigned int targetAddress;
@@ -11,3 +9,4 @@ struct BusRequest {
 };
 
 #endif //BUSREQUEST_H
+

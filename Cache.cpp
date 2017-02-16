@@ -1,5 +1,7 @@
 #include "Cache.h"
 #include <assert.h>
+#include <iostream>
+using namespace std;
 
 Cache::Cache (unsigned int adxLength, unsigned int numSets, unsigned int lps, unsigned int bpl) {
     int i;
@@ -59,11 +61,10 @@ bool Cache::hasCleanLines(unsigned int adx) {
 }
 
 bool Cache::contains(unsigned int adx) {
-    assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
-    return set->contains(tag);
+    return set->CacheSet::contains(tag);
 }
 
 void Cache::invalidate(unsigned int adx) {
@@ -137,5 +138,14 @@ void Cache::setInvalid(unsigned int adx) {
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     set->setInvalid(tag);
+}
+
+void Cache::insertLine(unsigned int adx) {
+    assert(!isFull(adx));
+    cout << "Inserting " << adx << endl;
+    unsigned int setNumber = getAdxSetNum(adx);
+    unsigned int tag = getTag(adx);
+    CacheSet* set = setArry.at(setNumber);
+    set->insertLine(tag);
 }
 

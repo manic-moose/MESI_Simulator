@@ -1,4 +1,7 @@
 #include "CacheSet.h"
+#include <iostream>
+
+using namespace std;
    
 CacheSet::CacheSet (unsigned int setNum, unsigned int linesPerSet, unsigned int tagSize) {
     setNumber   = setNum;
@@ -30,6 +33,22 @@ void CacheSet::streamIn (CacheLine* line, unsigned int tag) {
     line->setDirty(false);
     line->setTag(tag);
     updateLRU(line);
+}
+
+void CacheSet::insertLine(unsigned int tag) {
+    CacheLine* line = getEmptyLine();
+    assert(line != NULL);
+    streamIn(line,tag);
+}
+
+CacheLine* CacheSet::getEmptyLine(void) {
+    for (vector<CacheLine*>::iterator it = lineArry.begin(); it < lineArry.end(); it++) {
+        CacheLine* line = (*it);
+        if (!line->isValid()) {
+            return line;
+        }
+    }
+    return NULL;
 }
 
 void CacheSet::updateLRU(CacheLine* line) {
@@ -144,11 +163,12 @@ bool CacheSet::hasCleanLines(void) {
 bool CacheSet::isFull(void) {
     for (vector<CacheLine*>::iterator it = lineArry.begin(); it < lineArry.end(); it++) {
         CacheLine* line = (*it);
+        bool isval = line->isValid();
         if (!line->isValid()) {
-            return true;   
+            return false;   
         }
     }
-    return false;
+    return true;
 }
 
 bool CacheSet::isExclusive(unsigned int tag) {

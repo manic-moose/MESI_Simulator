@@ -8,3 +8,4 @@ public:
     virtual ~EventData() {};  
 };
 #endif //EVENT_DATA_H
+

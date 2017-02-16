@@ -130,6 +130,10 @@ private:
      * @return Returns the least recently used line in the list
      */
     CacheLine* findLRU (vector<CacheLine*>* candidates);
+
+    CacheLine* getEmptyLine(void);
+
+    void insertLine(unsigned int tag);
     
     // MESI Accessor and Modifiers
     bool isExclusive(unsigned int tag);
@@ -143,3 +147,4 @@ private:
 
 };
 #endif //CACHESET_H
+

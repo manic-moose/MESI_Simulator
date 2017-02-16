@@ -47,3 +47,4 @@ public:
 };
  
 #endif //STATE_MACHINE_H
+

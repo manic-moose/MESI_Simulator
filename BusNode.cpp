@@ -7,3 +7,4 @@ unsigned int BusNode::getAddress(void) {
 void BusNode::setAddress(unsigned int adx) {
     address = adx;
 }
+

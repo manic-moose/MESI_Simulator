@@ -4,7 +4,7 @@ void CacheController::addNewBusRequest(BusRequest* r) {
     busReqQueue.insert(busReqQueue.begin(), r);   
 }
 
-bool CacheController::hasPendingBusRequest(void) {
+bool CacheController::hasQueuedBusRequest(void) {
     return (busReqQueue.size() > 0);
 }
 
@@ -37,7 +37,9 @@ bool CacheController::requestsTransaction(void) {
 }
 
 void CacheController::issueNextBusRequest(void) {
-    assert(busReqQueue.size() > 0);
+    if(!hasQueuedBusRequest()) {
+        return;
+    }
     nextToIssue = busReqQueue.back();
     busReqQueue.pop_back();
     pendingBusReqFlag = 1;
@@ -67,3 +69,4 @@ void CacheController::invalidateCacheItem(unsigned int memoryAdx) {
         addNewBusRequest(streamOut);
     }
 }
+
