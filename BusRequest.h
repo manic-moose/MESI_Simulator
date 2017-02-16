@@ -4,9 +4,10 @@
 #include "EventData.h"
 
 struct BusRequest {
-    unsigned int address;
-    unsigned int requestCode;
+    unsigned int commandCode;
+    unsigned int targetAddress;
     unsigned int sourceAddress;
+    unsigned int payload;
 };
 
 #endif //BUSREQUEST_H

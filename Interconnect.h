@@ -6,12 +6,11 @@
 #include "BusNode.h"
 #include <assert.h>
 #include <map>
+#include "BusProtocol.h"
 
 using namespace std;
 
 #define _INTERCONNECT_STATE_COUNT_ 3
-
-#define BROADCAST_ADX 0
 
 class Interconnect : public StateMachine {
     

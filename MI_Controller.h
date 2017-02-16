@@ -2,9 +2,8 @@
 #define MI_CONTROLLER_H
 
 #include "CacheController.h"
-
-#define _MI_CONTROLLER_STATES_ 3
-
+#include "StateMachine.h"
+#include <string>
 
 #define ADX_LEN 32
 #define NUM_SETS 1024
@@ -12,35 +11,38 @@
 #define BYTES_PER_LINE 32
 #define STREAM_PENALTY 50
 
+using namespace std;
+
 class MI_Controller : public CacheController {
-    
-public:
-    
-    MI_Controller() : CacheController(_MI_CONTROLLER_STATES_,ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {}
-    
-    void handleMemoryAccess(Instruction i);  
-    void acceptBusTransaction(BusRequest* d);
-    BusRequest* initiateBusTransaction(void);
-    bool requestsTransaction(void);
-    
     
 private:
     
-    void ST_Idle(void);
-    void Foo(void);
-    void Bar(void);
+    // Define state transitions
+    string Idle_Transition(void);
+    string CheckCache_Transition(void);
+    string BusRead_Transition(void);
+    string UpdateCache_Transition(void);
+    string Complete_Transition(void);
     
-    BEGIN_STATE_MAP
-        STATE_MAP_ENTRY(&MI_Controller::ST_Idle)
-        STATE_MAP_ENTRY(&MI_Controller::Foo)
-        STATE_MAP_ENTRY(&MI_Controller::Bar)
-    END_STATE_MAP
-        
-    enum E_States {
-        ST_IDLE = 0,
-        ST_FOO,
-        ST_BAR
-    };
+    // Functions executed during each tick while in
+    // the associated state
+    void Idle_Action(void);
+    void CheckCache_Action(void);
+    void BusRead_Action(void);
+    void UpdateCache_Action(void);
+    void Complete_Action(void);
+    
+public:
+    
+    MI_Controller() : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {
+    }
+    
+    void init (void);
+    
+    void handleMemoryAccess(Instruction* i);  
+    void acceptBusTransaction(BusRequest* d);
+    
+    void Tick(void);
     
 };
 
