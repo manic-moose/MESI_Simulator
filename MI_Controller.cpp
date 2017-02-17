@@ -4,12 +4,6 @@
 
 using namespace std;
 
-void MI_Controller::handleMemoryAccess(Instruction* i) {
-    assert(!hasPendingInstruction());
-    currentInstruction = i;
-    pendingInstructionFlag = 1;
-}
-
 void MI_Controller::acceptBusTransaction(BusRequest* d) {
     unsigned int cmd       = d->commandCode;
     unsigned int target    = d->targetAddress;
@@ -54,22 +48,25 @@ void MI_Controller::acceptBusTransaction(BusRequest* d) {
     
 void MI_Controller::Idle_Action(void) {
     cout << "MI Controller Idle Action" << endl;
+    // Nothing to do, just wait for new instructions from Processor
 }
 
 void MI_Controller::CheckCache_Action(void) {
     cout << "MI Controller CheckCache Action" << endl;
+    // Nothing to do here, the cache hit/miss check is performed
+    // in transition function to determine next state only
 }
 
 void MI_Controller::BusRead_Action(void) {
     cout << "MI Controller BusRead Action" << endl;
     if (awaitingBusRead) {
-        
+        // Do Nothing, keep waiting
     } else {
         BusRequest* readRequest = new BusRequest;
         readRequest->commandCode   = BUSREAD;
         readRequest->targetAddress = BROADCAST_ADX;
         readRequest->sourceAddress = getAddress();
-        readRequest->payload       = currentInstruction->ADDRESS;
+        readRequest->payload       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
         addNewBusRequest(readRequest);
         awaitingBusRead = 1;
     }
@@ -78,7 +75,19 @@ void MI_Controller::BusRead_Action(void) {
 void MI_Controller::UpdateCache_Action(void) {
     if (noCacheUpdateOnRead) {
         // Indicates that a bus read occurred to the same
-        // address while this node was waiting for data
+        // address while this node was waiting for data.
+        // If this was a LOAD instruction, the data is just
+        // passed onto the core without adding to the cache.
+        // If it is a STORE instruction, then a write request
+        // must be issued to memory immediately.
+        if (currentInstruction->OPCODE == STORE_CMD) {
+            BusRequest* writeRequest = new BusRequest;
+            writeRequest->commandCode   = BUSWRITE;
+            writeRequest->targetAddress = BROADCAST_ADX;
+            writeRequest->sourceAddress = getAddress();
+            writeRequest->payload       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            addNewBusRequest(writeRequest);
+        }
         noCacheUpdateOnRead = false;
     } else {
         unsigned int adx = currentInstruction->ADDRESS;
@@ -89,6 +98,12 @@ void MI_Controller::UpdateCache_Action(void) {
             CacheLine* evictedLine = cache->evictLineInSet(adx);
             if (evictedLine->isDirty()) {
                 // Need to write this line back to memory
+                BusRequest* writeRequest = new BusRequest;
+                writeRequest->commandCode   = BUSWRITE;
+                writeRequest->targetAddress = BROADCAST_ADX;
+                writeRequest->sourceAddress = getAddress();
+                writeRequest->payload       = cache->getAddress(evictedLine->getSetNumber(), evictedLine->getTag());
+                addNewBusRequest(writeRequest);
             }
         }
         cache->insertLine(adx);
@@ -138,8 +153,10 @@ MI_Controller::STATES MI_Controller::Complete_Transition (void) {
 }
 
 void MI_Controller::Tick(void) {
+    // Transitions to the new state and calls the actions function
     transitionState();
-    callActionFunction();
+    // Attempts to issue 
+    issueNextBusRequest();
 }
 
 MI_Controller::STATES MI_Controller::getNextState(void) {
@@ -158,9 +175,11 @@ MI_Controller::STATES MI_Controller::getNextState(void) {
 }
 
 void MI_Controller::transitionState(void) {
+    // Update to the next state
     STATES nextState = getNextState();
     currentState = nextState;
-    issueNextBusRequest();
+    // Call the action function for the current state
+    callActionFunction();
 }
 
 void MI_Controller::callActionFunction(void) {

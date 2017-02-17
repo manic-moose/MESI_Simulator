@@ -57,7 +57,6 @@ public:
     }
     
     
-    void handleMemoryAccess(Instruction* i);  
     void acceptBusTransaction(BusRequest* d);
     
     void Tick(void);
