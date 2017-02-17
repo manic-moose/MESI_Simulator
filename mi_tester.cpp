@@ -61,7 +61,43 @@ int main (void) {
     c->acceptBusTransaction(p);
     c->Tick();
     c->Tick();
+    c->Tick();
+    c->acceptBusTransaction(p);
+    c->Tick();
     
- 
+    
+    Instruction* i1 = new Instruction;
+    
+    i1->OPCODE = STORE_CMD;
+    i1->ADDRESS = 59684;
+    
+    c->handleMemoryAccess(i1);
+    
+    c->Tick();
+    c->Tick();
+    c->Tick();
+    c->Tick();
+    
+    BusRequest* q = new BusRequest();
+    q->commandCode = BUSREAD;
+    q->targetAddress = BROADCAST_ADX;
+    q->sourceAddress = 2;
+    q->payload = 59684;
+    
+    c->acceptBusTransaction(q);
+    c->Tick();
+    
+    BusRequest* j = new BusRequest();
+    j->commandCode = DATA_RETURN_MEMORY;
+    j->targetAddress = BROADCAST_ADX;
+    j->sourceAddress = 2;
+    j->payload = 59684;
+    
+    c->acceptBusTransaction(j);
+    c->Tick();
+    c->Tick();
+    c->Tick();
+    c->Tick();
+    
     return 0;
 }
