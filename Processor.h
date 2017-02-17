@@ -1,6 +1,6 @@
 #ifndef PROCESSOR_H
 #define PROCESSOR_H
-#include "StateMachine.h"
+
 #include "BusNode.h"
 #include "CacheController.h"
 #include "BusRequest.h"
@@ -11,20 +11,65 @@
 
 using namespace std;
 
-#define _PROCESSOR_STATE_COUNT_ 4
+#define MI_CONTROLLER_TYPE  0
+#define MSI_CONTROLLER_TYPE 1
+#define MESI_CONTROLLE_TYPE 2
 
 
-class Processor : public StateMachine, public BusNode {
+class Processor : public BusNode {
+
+private:
+    
+    CacheController* cacheController;
+    queue<Instruction*>* instrQueue;
+    
+    typedef enum E_STATES {
+        IDLE_STATE,
+        CHECKOPTYPE_STATE,
+        MEMORYRETURNWAIT_STATE
+    } STATES;
+    
+    STATES currentState;
+    void callActionFunction(void);
+    void transitionState(void);
+    STATES getNextState(void);
+    
+    // State Machine Transition Functions
+    STATES Idle_Transition(void);
+    STATES CheckOpType_Transition(void);
+    STATES MemoryReturnWait_Transition(void);
+    
+    void Idle_Action(void);
+    void CheckOpType_Action(void);
+    void MemoryReturnWait_Action(void);
+       
+    // Other private methods
+    
+    // Returns the next instruction from the queue
+    // and removes it from the queue
+    Instruction getNextInstruction(void);
+    
+    bool nextInstIsMemoryOp(void);
+
 
 public:
-    Processor() : StateMachine(_PROCESSOR_STATE_COUNT_) {
-        cacheController = new MI_Controller;
+    Processor(unsigned int controllerType) {
+        if (controllerType == MI_CONTROLLER_TYPE) {
+            cacheController = new MI_Controller;
+        } else if (controllerType == MSI_CONTROLLER_TYPE) {
+            cout << "MSI Not yet enabled" << endl;
+            exit(1);
+        } else if (controllerType == MESI_CONTROLLER_TYPE) {
+            cout << "MESI Not yet enabled" << endl;
+            exit(1);
+        } else {
+            cout << "Invalid controller type. Must be one of MI_CONTROLLER_TYPE, MSI_CONTROLLER_TYPE, or MESI_CONTROLLER_TYPE." << endl;
+            exit(1);
+        }
     }
 
     // External Event Inputs
-    void Tick(void);      // System Clock Tick
-    void MemReturn(void);                 // Memory Operation Completed
-    void Reset(void);                     // System Reset
+    void Tick(void);             // System Clock Tick
     
     // Bus Node Methods
     void acceptBusTransaction(BusRequest* d);
@@ -34,37 +79,14 @@ public:
     // Other Public Methods
     bool isIdle(void); // Indicates the processor is read to process the next instruction
     
-    //
-    void insertInstruction(Instruction i);
+    // Pushes a new instruction onto the queue.
+    void insertInstruction(Instruction* i);
+    
+    // Returns the number of instructions currently queued
     unsigned int getInstructionCount(void);
+    
+    // Returns true if there are >0 queued instructions
     bool hasPendingInstructions(void);
     
-private:
-    
-    CacheController* cacheController;
-    
-    queue<Instruction>* instrQueue;
-    
-    // State Machine State Functions
-    void ST_Idle(void);
-    void ST_CheckOpType(void);
-    void ST_MemoryReturnWait(void);
-    
-    // State Map to Define State Function Order
-    BEGIN_STATE_MAP
-        STATE_MAP_ENTRY(&Processor::ST_Idle)
-        STATE_MAP_ENTRY(&Processor::ST_CheckOpType)
-        STATE_MAP_ENTRY(&Processor::ST_MemoryReturnWait)
-    END_STATE_MAP
-        
-    enum E_States {
-        ST_IDLE = 0,
-        ST_CHECK_OP_TYPE,
-        ST_MEMORY_RETURN_WAIT
-    };
-    
-    // Other private methods
-    Instruction getNextInstruction(void);
-
 };
 #endif //PROCESSOR_H

@@ -1,51 +1,91 @@
 #include "Processor.h"
 
-
 void Processor::Tick(void) {
-    BEGIN_TRANSITION_MAP                         // - Current State -
-        TRANSITION_MAP_ENTRY(ST_CHECK_OP_TYPE)   // Idle
-        TRANSITION_MAP_ENTRY(EVENT_IGNORED)      // Check Operation Type
-        TRANSITION_MAP_ENTRY(ST_IDLE)            // Processing Done Wait
-    END_TRANSITION_MAP(NULL)
+    // Propagate clock to the cache controller
+    cacheController->Tick();
+    transitionState();
 }
 
-void Processor::MemReturn(void) {
-    BEGIN_TRANSITION_MAP                           // - Current State -
-        TRANSITION_MAP_ENTRY(EVENT_IGNORED)        // Idle
-        TRANSITION_MAP_ENTRY(EVENT_IGNORED)        // Check Operation Type
-        TRANSITION_MAP_ENTRY(EVENT_IGNORED)        // Processing Done Wait
-    END_TRANSITION_MAP(NULL)
+void Processor::Idle_Action(void) {
+    // No actions required
 }
 
-void Processor::Reset(void) {
-    BEGIN_TRANSITION_MAP                   // - Current State -
-        TRANSITION_MAP_ENTRY(ST_IDLE)      // Idle
-        TRANSITION_MAP_ENTRY(ST_IDLE)      // Check Operation Type
-        TRANSITION_MAP_ENTRY(ST_IDLE)      // Processing Done Wait
-    END_TRANSITION_MAP(NULL)
-}
-
-void Processor::ST_Idle(void) {
-    printf("Idle State Function Called\n");
-}
-
-void Processor::ST_CheckOpType(void) {
-    printf("CheckOp state function called\n");
-    
-    if (hasPendingInstructions()) {
-        Instruction i = getNextInstruction();
-        if (i.OPCODE == LOAD_CMD || i.OPCODE == STORE_CMD) {
-            InternalEvent(ST_MEMORY_RETURN_WAIT);
-        } else {
-            InternalEvent(ST_IDLE);
-        }
-    } else {
-        InternalEvent(ST_IDLE);
+void Processor::CheckOpType_Action(void) {
+    Instruction* i = getNextInstruction();
+    if (i->OPCODE == LOAD_CMD || i->OPCODE == STORE_CMD) {
+        // Send the memory instruction to the cache
+        // controller for processing.
+        cacheController->handleMemoryAccess(i);
     }
 }
 
-void Processor::ST_MemoryReturnWait(void) {
-    printf("Process done wait function called\n");
+void Processor::ST_MemoryReturnWait_Action(void) {
+    // This function is used to keep track of how
+    // long each memory operation takes
+}
+
+Processor::STATES Processor::Idle_Transition(void) {
+    if (hasPendingInstructions()) {
+        return CHECKOPTYPE_STATE;
+    } else {
+        return IDLE_STATE;   
+    }
+}
+
+Processor::STATES Processor::CheckOpType_Transition(void) {
+    if (nextInstIsMemoryOp()) {
+        return MEMORYRETURNWAIT_STATE;
+    } else {
+        return IDLE_STATE;
+    }
+}
+
+Processor::STATES Processor::MemoryReturnWait_Transition(void) {
+    if (cacheController->hasPendingInstruction()) {
+        // Controller is still busy handling instruction
+        return MEMORYRETURNWAIT_STATE;   
+    } else {
+        return IDLE_STATE;   
+    }
+}
+
+bool Processor::nextInstIsMemoryOp(void) {
+    return (instrQueue.front()->OPCODE == LOAD_CMD || instrQueue.front()->OPCODE == STORE_CMD); 
+}
+
+STATES Processor::getNextState(void) {
+    switch(currentState) {
+        case IDLE_STATE:
+            return Idle_Transition();
+        case CHECKOPTYPE_STATE:
+            return CheckOpType_Transition();
+        case MEMORYRETURNWAIT_STATE:
+            return MemoryReturnWait_Transition();
+    }
+    // Default
+    return IDLE_STATE;
+}
+
+void Processor::callActionFunction(void) {
+    switch(currentState) {
+        case IDLE_STATE:
+            Idle_Action();
+            break;
+        case CHECKOPTYPE_STATE:
+            CheckOpType_Action();
+            break;
+        case MEMORYRETURNWAIT_STATE:
+            MemoryReturnWait_Action();
+            break;
+    }
+}
+
+void Processor::transitionState(void) {
+    // Update to the next state
+    STATES nextState = getNextState();
+    currentState = nextState;
+    // Call the action function for the current state
+    callActionFunction();
 }
 
 void Processor::acceptBusTransaction(BusRequest* d) {
@@ -64,7 +104,7 @@ bool Processor::isIdle(void) {
     return (currentState == ST_IDLE);
 }
 
-void Processor::insertInstruction(Instruction i) {
+void Processor::insertInstruction(Instruction* i) {
     instrQueue->push(i);
 }
 
