@@ -13,7 +13,7 @@ public:
     BusRequest* initiateBusTransaction(void);
     bool requestsTransaction();
     
-    void sendNewTransaction(unsigned int adx, unsigned int code);
+    void sendNewTransaction(unsigned int adx, unsigned int code, unsigned int payload);
     
 private:
     

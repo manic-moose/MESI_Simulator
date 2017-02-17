@@ -3,71 +3,80 @@
 #include <iostream>
 
 void Interconnect::Tick(void) {
-    BEGIN_TRANSITION_MAP                    // - Current State -
-        TRANSITION_MAP_ENTRY(ST_CHECK)      // Idle
-        TRANSITION_MAP_ENTRY(CANNOT_HAPPEN) // Checking For New Request
-        TRANSITION_MAP_ENTRY(ST_CHECK)      // Busy Processing Transaction
-    END_TRANSITION_MAP(NULL)
+    serviceBusNodes();
+    updatePriorityQueue();
 }
 
-void Interconnect::ST_Idle(void) {
-    std::cout << "Interconnect: IDLE" << std::endl;
-    // Nothing to do in IDLE state
-}
-
-void Interconnect::ST_Check(void) {
-    std::cout << "Interconnect: CHECK" << std::endl;
-    map<unsigned int, BusNode*>::iterator it;
-    for (it=nodes.begin(); it != nodes.end(); it++) {
-        unsigned int address = it->first;
-        BusNode* node = it->second;
-        std::cout << "Here for node adx: " << address << std::endl;
-        if (node->requestsTransaction()) {
-            std::cout << "Here2 for node adx: " << address << std::endl;
-            // Pending request found - go to BUSY state
-            adx_to_process = address;
-            InternalEvent(ST_BUSY);
+void Interconnect::serviceBusNodes(void) {
+    for(vector<unsigned int>::iterator it = priorityQueue->begin(); it < priorityQueue->end(); it++) {
+        unsigned int address = (*it);
+        BusNode* txNode = getNode(address);
+        if (txNode->requestsTransaction()) {
+            BusRequest* request = txNode->initiateBusTransaction();
+            unsigned int requestAdx  = request->targetAddress;
+            if (requestAdx == BROADCAST_ADX) {
+                broadcastBusRequest(request);
+            } else {
+                BusNode* receiverNode = getNode(requestAdx);
+                receiverNode->acceptBusTransaction(request);
+            }
+            // We're now done with the BusRequest, so lets delete it.
+            delete request;
+            // Only handle a single bus communication in each service
+            // cycle (one per clock tick)
             return;
         }
     }
-    std::cout << "No pending requests found" << std::endl;
-    // No requests found, go back to IDLE state
-    InternalEvent(ST_IDLE);
 }
 
-void Interconnect::ST_Busy(void) {
-    std::cout << "Interconnect: BUSY" << std::endl;
-    // Handle a single pending request
-    unsigned int txAddress = adx_to_process;
-    BusNode* transmitterNode = getNode(txAddress);
-    BusRequest* request = transmitterNode->initiateBusTransaction();
-    unsigned int requestAdx  = request->address;
-    if (requestAdx == BROADCAST_ADX) {
-        map<unsigned int, BusNode*>::iterator it;
-        for (it=nodes.begin(); it != nodes.end(); it++) {
-            unsigned int nodeAddress = it->first;
-            if (!(nodeAddress == txAddress)) {
-                BusNode* receiverNode = it->second;
-                receiverNode->acceptBusTransaction(request);
-            }
+void Interconnect::broadcastBusRequest(BusRequest* r) {
+    unsigned int txAddress = r->sourceAddress;
+    map<unsigned int, BusNode*>::iterator it;
+    for (it=nodes.begin(); it != nodes.end(); it++) {
+        unsigned int nodeAddress = it->first;
+        if (!(nodeAddress == txAddress)) {
+            // Only send if this node is not the
+            // transmitter node
+            BusNode* receiverNode = it->second;
+            receiverNode->acceptBusTransaction(r);
         }
-    } else {
-        BusNode* receiverNode = getNode(requestAdx);
-        receiverNode->acceptBusTransaction(request);
     }
 }
 
 void Interconnect::addNode(BusNode* n, unsigned int address) {
     assert(!hasNode(address));
     assert(!(address==BROADCAST_ADX));
+    cout << "Before insert" << endl;
     nodes.insert(pair<unsigned int, BusNode*>(address,n));
+    cout << "After insert" << endl;
     n->setAddress(address);
+    cout << "After set address " << endl;
+    priorityQueue->push_back(address);
+    cout << "priority queue push" << endl;
 }
 
 void Interconnect::deleteNode(unsigned int address) {
     if (hasNode(address)) {
         nodes.erase(address);
     }
+    for(vector<unsigned int>::iterator it = priorityQueue->begin(); it < priorityQueue->end(); it++) {
+        unsigned int pAdx = (*it);   
+        if (pAdx == address) {
+            priorityQueue->erase(it);
+        }
+    }
+}
+
+void Interconnect::updatePriorityQueue(void) {
+    if (getNodeCount() > 0) {
+        unsigned int priorityOne = priorityQueue->at(0);
+        priorityQueue->erase(priorityQueue->begin());
+        priorityQueue->push_back(priorityOne);
+    }
+}
+
+unsigned int Interconnect::getNodeCount(void) {
+    return nodes.size();   
 }
 
 bool Interconnect::hasNode(unsigned int address) {

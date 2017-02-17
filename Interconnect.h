@@ -1,21 +1,19 @@
 #ifndef INTERCONNECT_H
 #define INTERCONNECT_H
 
-#include "StateMachine.h"
 #include "BusRequest.h"
 #include "BusNode.h"
+#include "BusProtocol.h"
 #include <assert.h>
 #include <map>
-#include "BusProtocol.h"
+#include <vector>
 
 using namespace std;
 
-#define _INTERCONNECT_STATE_COUNT_ 3
-
-class Interconnect : public StateMachine {
+class Interconnect {
     
 public:
-    Interconnect() : StateMachine(_INTERCONNECT_STATE_COUNT_) {}
+    Interconnect() {}
     
     // External Event Inputs
     void Tick(void);
@@ -24,29 +22,27 @@ public:
     void deleteNode(unsigned int address);
     bool hasNode(unsigned int address);
     BusNode* getNode(unsigned int address);
+    unsigned int getNodeCount(void);
     
 private:
     
     // Map of each address to a BusNode
     map <unsigned int, BusNode*> nodes;
     
-    unsigned int adx_to_process;
+    // list of the addresses to maintain priority
+    vector<unsigned int>* priorityQueue;
     
-    void ST_Idle(void);  // Idle waiting for requests
-    void ST_Check(void); // Checking for pending requests on tick
-    void ST_Busy(void);  // Busy processing request
+    // Moves the current head of the priority
+    // to the back of the priority queue
+    void updatePriorityQueue(void);
     
-    BEGIN_STATE_MAP
-        STATE_MAP_ENTRY(&Interconnect::ST_Idle)
-        STATE_MAP_ENTRY(&Interconnect::ST_Check)
-        STATE_MAP_ENTRY(&Interconnect::ST_Busy)
-    END_STATE_MAP
-        
-    enum E_States {
-        ST_IDLE = 0,
-        ST_CHECK,
-        ST_BUSY
-    };
+    // Checks each bus node and grants access
+    // to the first one a bus request is pending.
+    void serviceBusNodes(void);
+    
+    // Broadcasts a message to all nodes except
+    // the source of the transmission
+    void broadcastBusRequest(BusRequest* r);  
 
 };
 

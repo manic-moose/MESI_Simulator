@@ -2,10 +2,12 @@
 #include <iostream>
 
 void DummyNode::acceptBusTransaction(BusRequest* d) {
-    unsigned int adx = d->address;
-    unsigned int code = d->requestCode;
+    unsigned int commandCode = d->commandCode;
+    unsigned int targetAdx = d->targetAddress;
+    unsigned int sourceAdx = d->sourceAddress;
+    unsigned int payload   = d->payload;
     
-    std::cout << "Got Request to my address: " << getAddress() << " Message Address: " << adx << " with code: " << code << std::endl;
+    std::cout << " Got Request to my address: " << getAddress() << " From Source: " << sourceAdx <<" with code: " << commandCode << " and payload " << payload << std::endl;
 }
 
 BusRequest* DummyNode::initiateBusTransaction(void) {
@@ -21,10 +23,12 @@ void DummyNode::setHasRequest(bool value) {
     hasRequest = value;
 }
     
-void DummyNode::sendNewTransaction(unsigned int adx, unsigned int code) {
+void DummyNode::sendNewTransaction(unsigned int adx, unsigned int code, unsigned int payload) {
     BusRequest* r = new BusRequest;
-    r->address = adx;
-    r->requestCode = code;
+    r->sourceAddress = getAddress();
+    r->targetAddress = adx;
+    r->commandCode = code;
+    r->payload = payload;
     setHasRequest(true);
     pendingReq = r;
 }

@@ -2,33 +2,38 @@
 #include "Interconnect.h"
 #include "DummyNode.h"
 
+using namespace std;
 
 int main (void) {
  
     Interconnect* i = new Interconnect;
     
+    
     DummyNode* node1 = new DummyNode;
     DummyNode* node2 = new DummyNode;
     DummyNode* node3 = new DummyNode;
     
+    cout << "Dummy nodes made" << endl;
     
     i->addNode(node1, 1);
     i->addNode(node2, 2);
     i->addNode(node3, 3);
     
-    i->Tick();
-    
-    node1->sendNewTransaction(2,10);
+    cout << "Dummy nodes hooked up to interconnect" << endl;
     
     i->Tick();
+    
+    node1->sendNewTransaction(2,10,6);
+    
     i->Tick();
-    node1->sendNewTransaction(2,4);
-    node2->sendNewTransaction(1,5);
+    i->Tick();
+    node1->sendNewTransaction(2,4,22);
+    node2->sendNewTransaction(1,5,14);
     i->Tick();
     i->Tick();
     i->Tick();
     
-    node1->sendNewTransaction(0,3);
+    node1->sendNewTransaction(0,3,34);
     i->Tick();
     i->Tick();
     
