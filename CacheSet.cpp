@@ -9,7 +9,7 @@ CacheSet::CacheSet (unsigned int setNum, unsigned int linesPerSet, unsigned int 
     CacheLine* newLine = NULL;
     unsigned int lruSize = static_cast<int> (floor(ceil(log2(linesPerSet))));
     for (int i = 0; i < linesPerSet; i++) {
-        newLine = new CacheLine(tagSize,lruSize,i);
+        newLine = new CacheLine(tagSize,lruSize,i, setNum);
         lineArry.push_back(newLine);
     }
 }
@@ -115,15 +115,16 @@ void CacheSet::checkAndFixLRU(void) {
     }
 }
 
-void CacheSet::invalidate(unsigned int tag) {
+CacheLine* CacheSet::invalidate(unsigned int tag) {
     CacheLine* line = getLine(tag);
-    invalidate(line);
+    return invalidate(line);
 }
 
-void CacheSet::invalidate(CacheLine* line) {
+CacheLine* CacheSet::invalidate(CacheLine* line) {
     line->setValid(false);
     line->setMESI(INVALID);
     checkAndFixLRU();
+    return line;
 }
 
 CacheLine* CacheSet::getLine(unsigned int tag) {

@@ -20,11 +20,12 @@ private:
     unsigned int lruMask;
     unsigned int lineNum;
     unsigned int mesi_bits;
+    unsigned int setNum;
     bool dirty_bit;
     bool valid_bit;
 
     public:
-    CacheLine (unsigned int tagLen, unsigned int lruLen, unsigned int lineNumber) {
+    CacheLine (unsigned int tagLen, unsigned int lruLen, unsigned int lineNumber, unsigned int setNumber) {
         int i;
         lineNum = lineNumber;
         tagMask = 0;
@@ -51,6 +52,11 @@ private:
     bool isModified(void);   
     bool isShared(void);
     bool isInvalid(void);
+    
+    /* @c getSetNumber
+     * @return Returns the set number this line belongs to
+     */
+    unsigned int getSetNumber(void);
     
     /* @c getLineNumber
      * @returns Returns the line number

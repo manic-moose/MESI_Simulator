@@ -79,16 +79,18 @@ private:
     /* @c invalidate - Invalidates the line with the given tag
      * @param tag
      *          The tag associated with line to invalidate
-     * @result The selected line will be invalidated.
+     * @result The selected line will be invalidated. Returns
+     *         a pointer to the line.
      */
-    void invalidate(unsigned int tag);
+    CacheLine* invalidate(unsigned int tag);
     
     /* @c invalidate - Invalidates the line with the given tag
      * @param line
      *          The line to invalidate
      * @result The selected line will be invalidated.
+     *         Returns the line pointer.
      */ 
-    void invalidate(CacheLine* line);
+    CacheLine* invalidate(CacheLine* line);
     
     /* @c getLine - Gets the line associated with the tag
      * @param tag

@@ -35,6 +35,23 @@ public:
     // Constructor
     Cache(unsigned int adxLength, unsigned int numSets, unsigned int lps, unsigned int bpl);
     
+    /* getAddress - Returns the address as derived using set num and tag.
+     * @param setNum - The set number of the address to calculate
+     * @param tag - The tag of the address to calculate
+     * @return Returns an address that is derived from the tag and set
+     *         number.
+     */
+    unsigned int getAddress(unsigned int setNum, unsigned int tag);
+    
+    /* getLineAlignedAddress - Given an address, returns the
+     * memory address that corresponds to the beginning of
+     * the cache line that the given address belongs to.
+     * @param adx
+     *          The non-line aligned address
+     * @return Returns the line aligned memory address
+     */
+    unsigned int getLineAlignedAddress(unsigned int adx);
+    
     /* getTagSize - Get the width of the tag
      * @return Returns the number of bits
      * that the tag will consume for each line.
@@ -75,11 +92,12 @@ public:
     /* @c invalidate - Invalidates the cache line
      * at address adx, if present
      * @param adx
-                The address of the item to invalidate
-     * @result If the item is in the cache, it will
-               be invalidated, otherwise nothing occurs.
+     *          The address of the item to invalidate
+     * @Return If the item is in the cache, it will
+     *         be invalidated, otherwise nothing occurs.
+     *         A pointer to the CacheLine is returned.
      */
-    void invalidate(unsigned int adx);
+    CacheLine* invalidate(unsigned int adx);
     
     /* @c isFull - Checks if the set associated with the
      *             given address is full or not

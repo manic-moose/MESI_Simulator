@@ -37,8 +37,18 @@ unsigned int Cache::getAdxSetNum (unsigned int adx) {
     return adx & setBitMask;
 }
 
+unsigned int Cache::getLineAlignedAddress(unsigned int adx) {
+    return getAddress(getAdxSetNum(adx),getTag(adx));
+}
+
 unsigned int Cache::getTag (unsigned int adx) {
     return (adx >> (addressLen - tagSize));
+}
+
+unsigned int Cache::getAddress(unsigned int setNum, unsigned int tag) {
+    unsigned int adx;
+    adx = (setNum << paragraphBitSize) | (tag << (addressLen - tagSize));
+    return adx;
 }
 
 CacheLine* Cache::evictLineInSet(unsigned int adx) {
@@ -67,12 +77,12 @@ bool Cache::contains(unsigned int adx) {
     return set->CacheSet::contains(tag);
 }
 
-void Cache::invalidate(unsigned int adx) {
+CacheLine* Cache::invalidate(unsigned int adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
-    set->invalidate(tag);
+    return set->invalidate(tag);
 }
 
 // MESI Accessor and Modifiers

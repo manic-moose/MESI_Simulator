@@ -64,7 +64,6 @@ void CacheLine::setLRU (unsigned int l) {
 
 bool CacheLine::isDirty () {
     bool dirt = dirty_bit;
-    cout << "Hmm " << dirt << endl;
     return dirt;
 }
 
@@ -82,5 +81,9 @@ void CacheLine::setValid (bool v) {
 
 bool CacheLine::tagMatches (unsigned int tag) {
     return (tag & tagMask) == getTag();
+}
+
+unsigned int CacheLine::getSetNumber(void) {
+    return setNum;   
 }
 
