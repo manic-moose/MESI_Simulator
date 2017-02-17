@@ -3,7 +3,6 @@
 
 #include "BusNode.h"
 #include "BusProtocol.h"
-#include "StateMachine.h"
 #include "Cache.h"
 #include "Instruction.h"
 #include "BusRequest.h"
@@ -19,7 +18,7 @@ public:
     CacheController(unsigned int adxLength, unsigned int setCount,
                    unsigned int linesPerSet, unsigned int bytesPerLine) {
         cache =  new Cache(adxLength,setCount,linesPerSet,bytesPerLine);
-        pendingInstructionFlag = 0;
+        pendingInstructionFlag = false;
         awaitingBusRead = 0;
     }
     
@@ -31,7 +30,16 @@ public:
     BusRequest* initiateBusTransaction(void);
     bool hasPendingInstruction(void);
     
-    virtual void Tick(void) =0;
+    // Tick for the cache controller. May be overridden
+    // in derived classes if needed.
+    // This implementation increments the current state
+    // and issues any queued bus transactions if possible
+    virtual void Tick(void);
+    
+    // State transition functions that must be implemented in
+    // derived class
+    virtual void callActionFunction(void) =0;
+    virtual void transitionState(void) =0;
     
 protected:
     

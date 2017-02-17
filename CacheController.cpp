@@ -38,14 +38,19 @@ bool CacheController::requestsTransaction(void) {
 
 void CacheController::issueNextBusRequest(void) {
     if(!hasQueuedBusRequest()) {
+        // No bus requests on the queue
         return;
     }
+    // Ensure no requests are currently being waited on.
+    // This function should only be called if the previous
+    // bus request has gone out already
+    assert(!requestsTransaction());
     nextToIssue = busReqQueue.back();
     busReqQueue.pop_back();
-    pendingBusReqFlag = 1;
+    pendingBusReqFlag = true;
     if (nextToIssue->commandCode == BUSREAD) {
         dispatchedBusRead = nextToIssue;
-        awaitingBusRead = 1;
+        awaitingBusRead = true;
     }
 }
 
@@ -74,5 +79,14 @@ void CacheController::invalidateCacheItem(unsigned int memoryAdx) {
 void CacheController::handleMemoryAccess(Instruction* i) {
     assert(!hasPendingInstruction());
     currentInstruction = i;
-    pendingInstructionFlag = 1;
+    pendingInstructionFlag = true;
+}
+
+void CacheController::Tick(void) {
+    // Transitions to the new state and calls the actions function
+    transitionState();
+    // Attempts to issue 
+    if (!requestsTransaction()) {
+        issueNextBusRequest();
+    }
 }

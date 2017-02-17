@@ -152,13 +152,6 @@ MI_Controller::STATES MI_Controller::Complete_Transition (void) {
     return IDLE_STATE;
 }
 
-void MI_Controller::Tick(void) {
-    // Transitions to the new state and calls the actions function
-    transitionState();
-    // Attempts to issue 
-    issueNextBusRequest();
-}
-
 MI_Controller::STATES MI_Controller::getNextState(void) {
     switch(currentState) {
         case IDLE_STATE:
@@ -172,6 +165,8 @@ MI_Controller::STATES MI_Controller::getNextState(void) {
         case COMPLETE_STATE:
             return Complete_Transition();
     }
+    // Default
+    return IDLE_STATE;
 }
 
 void MI_Controller::transitionState(void) {

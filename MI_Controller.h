@@ -2,7 +2,6 @@
 #define MI_CONTROLLER_H
 
 #include "CacheController.h"
-#include "StateMachine.h"
 
 #define ADX_LEN 32
 #define NUM_SETS 1024
@@ -58,8 +57,6 @@ public:
     
     
     void acceptBusTransaction(BusRequest* d);
-    
-    void Tick(void);
     
 };
 
