@@ -24,7 +24,7 @@ public:
     }
     
     // Function to handle LOAD or STORE commands from the processor
-    virtual void handleMemoryAccess(Instruction* i) =0;
+    void handleMemoryAccess(Instruction* i);
         
     // BusNode functions
     bool requestsTransaction(void);
@@ -38,9 +38,10 @@ protected:
     // The cache the controller interfaces to
     Cache* cache;
     // Cache controlling methods
+    
     // This will invalidate a line in the cache that maps
     // to memoryAdx. If the line is dirty, it will also
-    // issue a bus write for the memory address
+    // issue a bus write for the memory address.
     void invalidateCacheItem(unsigned int memoryAdx);
     
     

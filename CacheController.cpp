@@ -59,7 +59,8 @@ bool CacheController::hasPendingInstruction(void) {
 }
 
 void CacheController::invalidateCacheItem(unsigned int memoryAdx) {
-    CacheLine* line = cache->evictLineInSet(memoryAdx);
+    assert(cache->contains(memoryAdx));
+    CacheLine* line = cache->invalidate(memoryAdx);
     if (line->isDirty()) {
         BusRequest* streamOut = new BusRequest;
         streamOut->commandCode   = BUSWRITE;
@@ -70,3 +71,8 @@ void CacheController::invalidateCacheItem(unsigned int memoryAdx) {
     }
 }
 
+void CacheController::handleMemoryAccess(Instruction* i) {
+    assert(!hasPendingInstruction());
+    currentInstruction = i;
+    pendingInstructionFlag = 1;
+}
