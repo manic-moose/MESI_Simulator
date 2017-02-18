@@ -2,6 +2,7 @@
 #define BUSNODE_H
 
 #include "BusRequest.h"
+#include <iostream>
 
 class BusNode {
 

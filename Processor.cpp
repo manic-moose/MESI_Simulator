@@ -3,6 +3,7 @@
 void Processor::Tick(void) {
     // Propagate clock to the cache controller
     cacheController->Tick();
+    cout << "Cache Controller Tick" << endl;
     transitionState();
 }
 
@@ -19,7 +20,7 @@ void Processor::CheckOpType_Action(void) {
     }
 }
 
-void Processor::ST_MemoryReturnWait_Action(void) {
+void Processor::MemoryReturnWait_Action(void) {
     // This function is used to keep track of how
     // long each memory operation takes
 }
@@ -50,12 +51,14 @@ Processor::STATES Processor::MemoryReturnWait_Transition(void) {
 }
 
 bool Processor::nextInstIsMemoryOp(void) {
-    return (instrQueue.front()->OPCODE == LOAD_CMD || instrQueue.front()->OPCODE == STORE_CMD); 
+    return (instrQueue->front()->OPCODE == LOAD_CMD || instrQueue->front()->OPCODE == STORE_CMD); 
 }
 
-STATES Processor::getNextState(void) {
+Processor::STATES Processor::getNextState(void) {
+    cout << "In getNextState()" << endl;
     switch(currentState) {
         case IDLE_STATE:
+            cout << "Got Idle()" << endl;
             return Idle_Transition();
         case CHECKOPTYPE_STATE:
             return CheckOpType_Transition();
@@ -82,9 +85,12 @@ void Processor::callActionFunction(void) {
 
 void Processor::transitionState(void) {
     // Update to the next state
+    cout << "In transition state" << endl;
     STATES nextState = getNextState();
+    cout << "Got next state" << endl;
     currentState = nextState;
     // Call the action function for the current state
+    cout << "State transition. " << endl;
     callActionFunction();
 }
 
@@ -101,7 +107,7 @@ bool Processor::requestsTransaction(void) {
 }
 
 bool Processor::isIdle(void) {
-    return (currentState == ST_IDLE);
+    return (currentState == IDLE_STATE);
 }
 
 void Processor::insertInstruction(Instruction* i) {
@@ -112,12 +118,18 @@ unsigned int Processor::getInstructionCount(void) {
     return instrQueue->size();
 }
 
-Instruction Processor::getNextInstruction(void) {
-    Instruction i = instrQueue->front();
+Instruction* Processor::getNextInstruction(void) {
+    Instruction* i = instrQueue->front();
     instrQueue->pop();
     return i;
 }
 
 bool Processor::hasPendingInstructions(void) {
     return (getInstructionCount() > 0);
+}
+
+void Processor::processInstruction(Instruction* i) {
+    if (i->OPCODE == LOAD_CMD || i->OPCODE == STORE_CMD) {
+        insertInstruction(i);
+    }
 }

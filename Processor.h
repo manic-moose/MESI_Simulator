@@ -8,12 +8,13 @@
 #include "MI_Controller.h"
 #include <assert.h>
 #include <queue>
+#include <iostream>
 
 using namespace std;
 
 #define MI_CONTROLLER_TYPE  0
 #define MSI_CONTROLLER_TYPE 1
-#define MESI_CONTROLLE_TYPE 2
+#define MESI_CONTROLLER_TYPE 2
 
 
 class Processor : public BusNode {
@@ -47,24 +48,22 @@ private:
     
     // Returns the next instruction from the queue
     // and removes it from the queue
-    Instruction getNextInstruction(void);
+    Instruction* getNextInstruction(void);
     
     bool nextInstIsMemoryOp(void);
 
 
 public:
     Processor(unsigned int controllerType) {
+        instrQueue = new queue<Instruction*>;
         if (controllerType == MI_CONTROLLER_TYPE) {
             cacheController = new MI_Controller;
         } else if (controllerType == MSI_CONTROLLER_TYPE) {
             cout << "MSI Not yet enabled" << endl;
-            exit(1);
         } else if (controllerType == MESI_CONTROLLER_TYPE) {
             cout << "MESI Not yet enabled" << endl;
-            exit(1);
         } else {
             cout << "Invalid controller type. Must be one of MI_CONTROLLER_TYPE, MSI_CONTROLLER_TYPE, or MESI_CONTROLLER_TYPE." << endl;
-            exit(1);
         }
     }
 
@@ -87,6 +86,10 @@ public:
     
     // Returns true if there are >0 queued instructions
     bool hasPendingInstructions(void);
+    
+    // Function to call to give the processor a new instruction. If
+    // the instruction is not a memory instruction, then it is discarded
+    void processInstruction(Instruction* i);
     
 };
 #endif //PROCESSOR_H
