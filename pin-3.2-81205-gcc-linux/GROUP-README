@@ -1,0 +1,18 @@
+This document explains how to run pin on programs to get trace output.
+The pintool that has been edited for our use is ./source/tools/MemTrace/memtrace.cpp
+
+Building:
+cd ./source/tools/MemTrace/
+make
+
+Notes:
+1. Always build again if memtrace.cpp is edited
+2. Makefile parameters can be edited in ./source/tools/Config/makefile.unix.config
+
+Running the pintool:
+cd ./source/tools/MemTrace
+../../../pin -t obj-intel64/memtrace.so -emit 1 -- ./programs/<your_program> -options
+
+There should now be outputs in the MemTrace directory with .0, .1, .2, etc.
+0 is the main thread, and 1+ are for the pthreads that were generated.
+The pthread traces are probably the best to use for our simulator.
