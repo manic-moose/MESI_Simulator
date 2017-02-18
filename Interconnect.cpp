@@ -46,13 +46,9 @@ void Interconnect::broadcastBusRequest(BusRequest* r) {
 void Interconnect::addNode(BusNode* n, unsigned int address) {
     assert(!hasNode(address));
     assert(!(address==BROADCAST_ADX));
-    cout << "Before insert" << endl;
     nodes.insert(pair<unsigned int, BusNode*>(address,n));
-    cout << "After insert" << endl;
     n->setAddress(address);
-    cout << "After set address " << endl;
     priorityQueue->push_back(address);
-    cout << "priority queue push" << endl;
 }
 
 void Interconnect::deleteNode(unsigned int address) {

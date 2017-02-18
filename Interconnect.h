@@ -13,7 +13,9 @@ using namespace std;
 class Interconnect {
     
 public:
-    Interconnect() {}
+    Interconnect() {
+        priorityQueue = new vector<unsigned int>;
+    }
     
     // External Event Inputs
     void Tick(void);

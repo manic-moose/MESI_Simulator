@@ -28,11 +28,12 @@ int main (void) {
     i->Tick();
     i->Tick();
     node1->sendNewTransaction(2,4,22);
+    i->Tick();
     node2->sendNewTransaction(1,5,14);
     i->Tick();
     i->Tick();
     i->Tick();
-    
+    cout << "Broadcast" << endl;
     node1->sendNewTransaction(0,3,34);
     i->Tick();
     i->Tick();

@@ -1,5 +1,6 @@
 #include "DummyNode.h"
 #include <iostream>
+using namespace std;
 
 void DummyNode::acceptBusTransaction(BusRequest* d) {
     unsigned int commandCode = d->commandCode;
