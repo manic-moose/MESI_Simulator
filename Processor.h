@@ -6,6 +6,8 @@
 #include "BusRequest.h"
 #include "Instruction.h"
 #include "MI_Controller.h"
+#include "MSI_Controller.h"
+#include "MESI_Controller.h"
 #include <assert.h>
 #include <queue>
 #include <iostream>
