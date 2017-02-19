@@ -7,13 +7,16 @@
 // List of possible bus commands from a processor
 // for its local memory operations
 #define BUSREAD     0
-#define BUSWRITE    1
+#define BUSREADX    1
+#define BUSWRITE    2
 
 // Response type commands
 // Data for a bus read returned from memory
-#define DATA_RETURN_MEMORY    2
+#define DATA_RETURN_MEMORY    3
 // Data for a bus read returned from a processor
-#define DATA_RETURN_PROCESSOR 3
+#define DATA_RETURN_PROCESSOR 4
+
+#define INVALIDATE 5
 
 #define IS_DATA_RETURN(a) ((a == DATA_RETURN_MEMORY) || (a == DATA_RETURN_PROCESSOR))
 
