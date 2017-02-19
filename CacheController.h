@@ -20,6 +20,7 @@ public:
         cache =  new Cache(adxLength,setCount,linesPerSet,bytesPerLine);
         pendingInstructionFlag = false;
         awaitingBusRead = 0;
+        busReqQueue = new vector<BusRequest*>;
     }
     
     // Function to handle LOAD or STORE commands from the processor
@@ -58,7 +59,7 @@ protected:
     Instruction* currentInstruction;  // The current LOAD/STORE instruction being handled
     bool pendingInstructionFlag;      // Indicates that the controller is busy with an instruction
     
-    vector<BusRequest*> busReqQueue;  // Queue of bus communications to transmit
+    vector<BusRequest*>* busReqQueue;  // Queue of bus communications to transmit
     
     BusRequest* nextToIssue;          // Holds the very next bus communication
     bool pendingBusReqFlag;           // For the BusNode interface - indicates this controller wants to send a request (nextToIssue)
@@ -79,6 +80,11 @@ protected:
     
     // Adds new bus request to the end of the bus request queue
     void addNewBusRequest(BusRequest* r);
+    
+    // Searches through the bus request queue/next to issue and cancels
+    // the first request it find matching the given
+    // command code and payload.
+    void cancelBusRequest(unsigned int commandCode, unsigned int payload);
     
 };
 

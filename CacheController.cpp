@@ -1,11 +1,11 @@
 #include "CacheController.h"
 
 void CacheController::addNewBusRequest(BusRequest* r) {
-    busReqQueue.insert(busReqQueue.begin(), r);   
+    busReqQueue->insert(busReqQueue->begin(), r);   
 }
 
 bool CacheController::hasQueuedBusRequest(void) {
-    return (busReqQueue.size() > 0);
+    return (busReqQueue->size() > 0);
 }
 
 bool CacheController::hasBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload) {
@@ -14,7 +14,7 @@ bool CacheController::hasBusRequestWithParams(unsigned int code, unsigned int ta
 }
 
 BusRequest* CacheController::getBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload) {
-    for (vector<BusRequest*>::iterator it = busReqQueue.begin(); it < busReqQueue.end(); it++) {
+    for (vector<BusRequest*>::iterator it = busReqQueue->begin(); it < busReqQueue->end(); it++) {
         BusRequest* r = (*it);
         if (r->commandCode == code && r->targetAddress == target && r->sourceAddress == source && r->payload == payload) {
             return r;   
@@ -24,10 +24,10 @@ BusRequest* CacheController::getBusRequestWithParams(unsigned int code, unsigned
 }
 
 void CacheController::deleteBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload) {
-    for (vector<BusRequest*>::iterator it = busReqQueue.begin(); it < busReqQueue.end(); it++) {
+    for (vector<BusRequest*>::iterator it = busReqQueue->begin(); it < busReqQueue->end(); it++) {
         BusRequest* r = (*it);
         if (r->commandCode == code && r->targetAddress == target && r->sourceAddress == source && r->payload == payload) {
-            busReqQueue.erase(it);
+            busReqQueue->erase(it);
         }
     }
 }
@@ -45,8 +45,8 @@ void CacheController::issueNextBusRequest(void) {
     // This function should only be called if the previous
     // bus request has gone out already
     assert(!requestsTransaction());
-    nextToIssue = busReqQueue.back();
-    busReqQueue.pop_back();
+    nextToIssue = busReqQueue->back();
+    busReqQueue->pop_back();
     pendingBusReqFlag = true;
     if ((nextToIssue->commandCode == BUSREAD) || nextToIssue->commandCode == BUSREADX) {
         dispatchedBusRead = nextToIssue;
@@ -88,5 +88,21 @@ void CacheController::Tick(void) {
     // Attempts to issue 
     if (!requestsTransaction()) {
         issueNextBusRequest();
+    }
+}
+
+void CacheController::cancelBusRequest(unsigned int commandCode, unsigned int payload) {
+    for (vector<BusRequest*>::iterator it = busReqQueue->begin(); it < busReqQueue->end(); it++) {
+        BusRequest* r = (*it);
+        if ((r->commandCode == commandCode) && (r->payload == payload)) {
+            busReqQueue->erase(it);
+            return;
+        }
+    }
+    if (pendingBusReqFlag && nextToIssue != NULL) {
+        if ((nextToIssue->commandCode == commandCode) && (nextToIssue->payload == payload)) {
+            pendingBusReqFlag = false;
+            awaitingBusRead = false;
+        }
     }
 }
