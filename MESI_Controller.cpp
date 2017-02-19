@@ -191,6 +191,18 @@ void MESI_Controller::UpdateCacheLoad_Action(void) {
     if (!cache->contains(address)) {
         // We didn't already have the data, so it must have come from the bus
         assert(gotDataReturnFromBusRead_Memory || gotDataReturnFromBusRead_Processor || snoopedDataReturnFromWriteback);
+        // First check that the cache has an empty space, and if not, we need to evict a line
+        // and potentially write it back out.
+        if (cache->isFull(address)) {
+            CacheLine* evictedLine = cache->evictLineInSet(address);
+            if (evictedLine->isModified()) {
+                // Evicted line is modified, so time to write back out
+                unsigned int setNumber      = evictedLine->getSetNumber();
+                unsigned int tag            = evictedLine->getTag();
+                unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                queueBusCommand(BUSWRITE,evictedLineAdx);
+            }
+        }
         cache->insertLine(address);
         if (gotDataReturnFromBusRead_Memory) {
             cache->setExclusive(address);
@@ -230,6 +242,18 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
     // to MODIFIED.
     unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     if (!cache->contains(address)) {
+        // First check that the cache has an empty space, and if not, we need to evict a line
+        // and potentially write it back out.
+        if (cache->isFull(address)) {
+            CacheLine* evictedLine = cache->evictLineInSet(address);
+            if (evictedLine->isModified()) {
+                // Evicted line is modified, so time to write back out
+                unsigned int setNumber      = evictedLine->getSetNumber();
+                unsigned int tag            = evictedLine->getTag();
+                unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                queueBusCommand(BUSWRITE,evictedLineAdx);
+            }
+        }
         cache->insertLine(address);   
     }
     cache->setModified(address);
