@@ -51,6 +51,11 @@ CacheLine* CacheSet::getEmptyLine(void) {
     return NULL;
 }
 
+void CacheSet::updateLRU(unsigned int tag) {
+    CacheLine* line = getLine(tag);
+    updateLRU(line);
+}
+
 void CacheSet::updateLRU(CacheLine* line) {
     unsigned int oldLRU = line->getLRU();
     line->setLRU(0);

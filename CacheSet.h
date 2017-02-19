@@ -46,6 +46,15 @@ private:
     
     /* @c updateLRU - Updates the LRU bits for each line
      * in the set.
+     * @param tag
+     *          The tag for the line to be updated
+     * @result Will update the LRU bits, with the parameter line
+     * being the newest use in the set.
+     */
+    void updateLRU(unsigned int tag);
+    
+    /* @c updateLRU - Updates the LRU bits for each line
+     * in the set.
      * @param CacheLine* line
      *          The line being accessed most recently.
      * @result Will update the LRU bits, with the parameter line

@@ -159,3 +159,11 @@ void Cache::insertLine(unsigned int adx) {
     set->insertLine(tag);
 }
 
+void Cache::updateLRU(unsigned int adx) {
+    assert(contains(adx));
+    unsigned int setNumber = getAdxSetNum(adx);
+    unsigned int tag = getTag(adx);
+    CacheSet* set = setArry.at(setNumber);
+    set->updateLRU(tag);
+}
+

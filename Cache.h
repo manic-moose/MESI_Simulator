@@ -131,6 +131,15 @@ public:
      *         there is space in the set.
      */
     void insertLine(unsigned int adx);
+    
+    /* @c updateLRU - Updates the lru bits for the cache line
+     *                at the given address.
+     * @param adx
+     *          Address that maps to cache line to update
+     * @result LRU bits will be updated, making the line
+     *         mapped to by adx the most recent to be used
+     */
+    void updateLRU(unsigned int adx);
         
         
     
