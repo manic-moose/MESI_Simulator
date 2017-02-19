@@ -48,14 +48,14 @@ void CacheController::issueNextBusRequest(void) {
     nextToIssue = busReqQueue.back();
     busReqQueue.pop_back();
     pendingBusReqFlag = true;
-    if (nextToIssue->commandCode == BUSREAD) {
+    if ((nextToIssue->commandCode == BUSREAD) || nextToIssue->commandCode == BUSREADX) {
         dispatchedBusRead = nextToIssue;
         awaitingBusRead = true;
     }
 }
 
 BusRequest* CacheController::initiateBusTransaction(void) {
-    pendingBusReqFlag = 0;
+    pendingBusReqFlag = false;
     return nextToIssue;
 }
 
