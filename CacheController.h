@@ -28,6 +28,8 @@ public:
     // BusNode functions
     bool requestsTransaction(void);
     BusRequest* initiateBusTransaction(void);
+    
+    
     bool hasPendingInstruction(void);
     
     // Tick for the cache controller. May be overridden
