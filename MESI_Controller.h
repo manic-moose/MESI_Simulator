@@ -64,6 +64,9 @@ private:
     void IssueReadX_Action(void);
     void IssueInvalidate_Action(void);
     void UpdateCacheStore_Action(void);
+    
+    // Broadcast a bus request with given command code and payload
+    void queueBusCommand(unsigned int command, unsigned int payload);
    
     
 public:
@@ -74,6 +77,9 @@ public:
         queuedBusRead                      = false;
         snoopedDataReturnFromWriteback     = false;
     }
+    
+    // BusNode receiver function
+    void acceptBusTransaction(BusRequest* d);
     
 };
 
