@@ -240,33 +240,77 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
     unsigned int cmd     = d->commandCode;
     unsigned int address = d->payload;
     if (awaitingBusRead) {
+        assert(dispatchedBusRead != NULL);
+        unsigned int dispatchedAddress = dispatchedBusRead->payload;
+        unsigned int dispatchedCmd     = dispatchedBusRead->commandCode;
         switch(cmd) {
             case BUSREAD:
                 // See notes below. Main difference is if the BUSREAD
                 // is to the same address that this controller is currently
                 // waiting for data for, then additional actions may be required
+                if (cache->contains(address)) {
+                    if (cache->isExclusive(address) || cache->isShared(address)) {
+                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
+                    } else if (cache->isModified(address)) {
+                        queueBusCommand(BUSWRITE, address);
+                    }
+                    cache->setShared(address);
+                }
+                if (dispatchedAddress == address) {
+                    
+                }
                 break;
             case BUSREADX:
                 // See notes below. Main difference is if the BUSREADX
                 // is to the same address that this controller is currently
                 // waiting for data for, then additional actions may be required
+                if (cache->contains(address)) {
+                    if (cache->isExclusive(address) || cache->isShared(address)) {
+                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
+                    } else if (cache->isModified(address)) {
+                        queueBusCommand(BUSWRITE, address);
+                    }
+                    cache->setInvalid(address);
+                }
+                if (dispatchedAddress == address) {
+                    
+                }
                 break;
             case BUSWRITE:
-                // See notes below. Also, if this is a BUSWRITE to the address,
-                // then we can snoop the data.
+                // if this is a BUSWRITE to the address we are waiting for, then we can snoop the data.
+                if (dispatchedAddress == address) {
+                    snoopedDataReturnFromWriteback = true;
+                    awaitingBusRead                = false;
+                }
                 break;
             case DATA_RETURN_MEMORY:
                 // Check if the address for the data return is the address we are waiting
-                // for or not. Set appropriate flags if it is
+                // for or not. Set appropriate flags if it is. Also see notes below.
+                if (dispatchedAddress == address) {
+                    gotDataReturnFromBusRead_Memory = true;
+                    awaitingBusRead                 = false;
+                }
                 break;
             case DATA_RETURN_PROCESSOR:
                 // Check if the address for the data return is the address we are waiting
                 // for or not. Set appropriate flags if it is
+                if (dispatchedAddress == address) {
+                    gotDataReturnFromBusRead_Processor = true;
+                    awaitingBusRead                    = false;
+                }
+                cancelBusRequest(DATA_RETURN_PROCESSOR,address);
                 break;
             case INVALIDATE:
                 // See notes below. Main difference is if the INVALIDATE
                 // is to the same address that this controller is currently
                 // waiting for data for, then additional actions may be required
+                if (cache->contains(address)) {
+                    assert(!cache->isModified(address));
+                    cache->setInvalid(address);
+                }
+                if (dispatchedAddress == address) {
+                    
+                }
                 break;
         }
     } else {
@@ -282,6 +326,14 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // means another processor beat this one, and we should cancel
                 // the bus request. After the DATA_RETURN_PROCESSOR or BUSWRITE is issued,
                 // the cache line should be updated to the shared state.
+                if (cache->contains(address)) {
+                    if (cache->isExclusive(address) || cache->isShared(address)) {
+                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
+                    } else if (cache->isModified(address)) {
+                        queueBusCommand(BUSWRITE, address);
+                    }
+                    cache->setShared(address);
+                }
                 break;
             case BUSREADX:
                 // If we have this item in the cache, then it must be invalidated.
@@ -290,12 +342,22 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // DATA_RETURN_PROCESSOR to perform a cache to cache transfer.
                 // After any required issues are complete, the line must be transitioned.
                 // to invalid.
+                if (cache->contains(address)) {
+                    if (cache->isExclusive(address) || cache->isShared(address)) {
+                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
+                    } else if (cache->isModified(address)) {
+                        queueBusCommand(BUSWRITE, address);
+                    }
+                    cache->setInvalid(address);
+                }
                 break;
             case BUSWRITE:
                 // BUSWRITES are only issued when a modified line is being written back
                 // to memory. Since we aren't currently waiting for any data and just observed
                 // a BUSWRITE, it is safe to assume that this cache does not contain the line
-                // and can ignore this
+                // and can ignore this. assert that this data is not present in our cache
+                // just to help catch bugs
+                assert(!cache->contains(address));
                 break;
             case DATA_RETURN_MEMORY:
                 // We aren't waiting for data, so ignore this
@@ -304,6 +366,7 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // If we've previously queued a DATA_RETURN_PROCESSOR to the same
                 // address, we should cancel this request since it was serviced by
                 // another cache controller
+                cancelBusRequest(DATA_RETURN_PROCESSOR,address);
                 break;
             case INVALIDATE:
                 // If we have this line in the cache, we must invalidate it.
@@ -313,6 +376,10 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // to an address that is in the SHARED state (which by definition
                 // means no modified copies exist). Assert that our line
                 // is not modified and invalidate the copy if it exists.
+                if (cache->contains(address)) {
+                    assert(!cache->isModified(address));
+                    cache->setInvalid(address);
+                }
                 break;
         }
     }
