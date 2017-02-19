@@ -7,7 +7,6 @@
 #define NUM_SETS 1024
 #define LINES_PER_SET 4
 #define BYTES_PER_LINE 32
-#define STREAM_PENALTY 50
 
 using namespace std;
 
