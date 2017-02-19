@@ -109,10 +109,10 @@ MESI_Controller::STATES MESI_Controller::CheckCacheStore_Transition(void) {
         
         // Assertion - this should never be true here, and if
         // it is, there is a bug.
-        assert(!cache->isInvalid());
+        assert(!cache->isInvalid(address));
         
         // Assert that one of the other three states aret true
-        bool isExlusive = cache->isExclusive(address);
+        bool isExclusive = cache->isExclusive(address);
         bool isModified = cache->isModified(address);
         bool isShared   = cache->isShared(address);
         
