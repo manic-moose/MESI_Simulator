@@ -15,15 +15,18 @@ class MESI_Controller : public CacheController {
 private:
     
     
-    // Boolean flags used for state machine
-    // behavior:
+    // Boolean flags used for state machine behavior:
     
-    // Indicates that data was returned from
-    // a bus read operation (either from memory
+    // These flags indicate that data was returned from
+    // a bus read/readx operation (either from memory
     // or a processor, which impacts how MESI
     // bits are updated)
-    bool gotDataReturnFromBusRead_Memory;
-    bool gotDataReturnFromBusRead_Processor;
+    bool gotDataReturnFromBusRead_Memory;     // Normal Return from memory
+    bool gotDataReturnFromBusRead_Processor;  // Normal cache-to-cache transfer
+    bool snoopedDataReturnFromWriteback;      // Snooped data from cache writeback
+    // Just an indicator that the current required bus read was already queued
+    // so that in the BUSREAD/BUSREADX states, multiple reads are not issued
+    bool queuedBusRead;
     
     typedef enum E_STATES {
         IDLE_STATE,
@@ -66,8 +69,10 @@ private:
 public:
     
     MESI_Controller() : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {
-        gotDataReturnFromBusRead_Memory = false;
+        gotDataReturnFromBusRead_Memory    = false;
         gotDataReturnFromBusRead_Processor = false;
+        queuedBusRead                      = false;
+        snoopedDataReturnFromWriteback     = false;
     }
     
 };

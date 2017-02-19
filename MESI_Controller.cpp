@@ -111,11 +111,11 @@ MESI_Controller::STATES MESI_Controller::CheckCacheStore_Transition(void) {
         // it is, there is a bug.
         assert(!cache->isInvalid(address));
         
-        // Assert that one of the other three states aret true
         bool isExclusive = cache->isExclusive(address);
         bool isModified = cache->isModified(address);
         bool isShared   = cache->isShared(address);
         
+        // Assert that one of the other three states are true
         assert(isExclusive || isModified || isShared);
         
         if (isModified || isExclusive) {
@@ -154,35 +154,101 @@ MESI_Controller::STATES MESI_Controller::UpdateCacheStore_Transition(void) {
 
 //Define state action functions
 void MESI_Controller::Idle_Action(void) {
-    // Reset boolean flags used
-    gotDataReturnFromBusRead_Memory = false;
+    // Reset boolean flags
+    gotDataReturnFromBusRead_Memory    = false;
     gotDataReturnFromBusRead_Processor = false;
+    snoopedDataReturnFromWriteback     = false;
+    awaitingBusRead                    = false;
+    pendingInstructionFlag             = false;
+    queuedBusRead                      = false;
 }
 
 void MESI_Controller::CheckCacheLoad_Action(void) {
-    
+    // Nothing occurs in this state except cache checks,
+    // which only determine state transition (see
+    // CheckCacheLoad_Transition())
 }
 
 void MESI_Controller::IssueRead_Action(void) {
-    
+    if (!queuedBusRead) {
+        // If we have done so yet in this state, queue the bus read,
+        // otherwise, we just wait in the state without performing any
+        // action
+        unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+        BusRequest* readRequest    = new BusRequest;
+        readRequest->commandCode   = BUSREAD;
+        readRequest->payload       = address;
+        readRequest->targetAddress = BROADCAST_ADX;
+        readRequest->sourceAddress = getAddress();
+        addNewBusRequest(readRequest);
+        queuedBusRead = true;
+    }
 }
 
 void MESI_Controller::UpdateCacheLoad_Action(void) {
-    
+    // When updating the cache for a load command, it will
+    // either be transitioned to E or S, depending on 
+    // the state of other caches. If the data comes
+    // from a cache-to-cache transfer, then we know
+    // that at least one other cache contains
+    // a copy of the shared data.
+    unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    if (cache->contains(address)) {
+        // If we already had the data, this means it was a cache hit. We do not need
+        // to update the state of the cache line except for LRU bits
+    } else {
+        // We didn't already have the data, so it must have come from the bus
+        assert(gotDataReturnFromBusRead_Memory || gotDataReturnFromBusRead_Processor || snoopedDataReturnFromWriteback);
+        cache->insertLine(address);
+        if (gotDataReturnFromBusRead_Memory) {
+            cache->setExclusive(address);
+        } else if (gotDataReturnFromBusRead_Processor) {
+            cache->setShared(address);
+        } else {
+            //snoopedDataReturnFromWriteback
+            cache->setShared(address);
+        }
+    }
 }
 
 void MESI_Controller::CheckCacheStore_Action(void) {
-    
+    // Nothing occurs in this state except cache checks,
+    // which only determine state transition (see
+    // CheckCacheStore_Transition())
 }
 
 void MESI_Controller::IssueReadX_Action(void) {
-    
+    if (!queuedBusRead) {
+        // If we have done so yet in this state, queue the bus read,
+        // otherwise, we just wait in the state without performing any
+        // action
+        unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+        BusRequest* readRequest    = new BusRequest;
+        readRequest->commandCode   = BUSREADX;
+        readRequest->payload       = address;
+        readRequest->targetAddress = BROADCAST_ADX;
+        readRequest->sourceAddress = getAddress();
+        addNewBusRequest(readRequest);
+        queuedBusRead = true;
+    }
 }
 
 void MESI_Controller::IssueInvalidate_Action(void) {
-    
+    unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    BusRequest* invalidate    = new BusRequest;
+    invalidate->commandCode   = INVALIDATE;
+    invalidate->payload       = address;
+    invalidate->targetAddress = BROADCAST_ADX;
+    invalidate->sourceAddress = getAddress();
+    addNewBusRequest(invalidate);
 }
 
 void MESI_Controller::UpdateCacheStore_Action(void) {
-    
+    // In this state, the cache line is being updated
+    // to MODIFIED.
+    unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    if (!cache->contains(address)) {
+        cache->insertLine(address);   
+    }
+    cache->setModified(address);
 }
