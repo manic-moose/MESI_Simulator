@@ -152,7 +152,6 @@ void Cache::setInvalid(unsigned int adx) {
 
 void Cache::insertLine(unsigned int adx) {
     assert(!isFull(adx));
-    cout << "Inserting " << adx << endl;
     unsigned int setNumber = getAdxSetNum(adx);
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
