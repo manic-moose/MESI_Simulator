@@ -1,10 +1,10 @@
 #include "BusNode.h"
 
 unsigned int BusNode::getAddress(void) {
-    return address;
+    return nodeAddress;
 }
 
 void BusNode::setAddress(unsigned int adx) {
-    address = adx;
+    nodeAddress = adx;
 }
 

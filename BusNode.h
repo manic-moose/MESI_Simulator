@@ -29,11 +29,11 @@ public:
     
     // Returns the address of this node
     unsigned int getAddress(void);
-    void setAddress(unsigned int address);
+    virtual void setAddress(unsigned int address);
     
-private:
+protected:
     
-    unsigned int address;
+    unsigned int nodeAddress;
     
     
 };
