@@ -15,6 +15,8 @@ class Interconnect {
 public:
     Interconnect() {
         priorityQueue = new vector<unsigned int>;
+        nodeLocked = false;
+        lockedAddress = 0;
     }
     
     // External Event Inputs
@@ -27,6 +29,9 @@ public:
     unsigned int getNodeCount(void);
     
 private:
+    
+    bool nodeLocked;
+    unsigned int lockedAddress;
     
     // Map of each address to a BusNode
     map <unsigned int, BusNode*> nodes;
@@ -41,10 +46,16 @@ private:
     // Checks each bus node and grants access
     // to the first one a bus request is pending.
     void serviceBusNodes(void);
+    // Services a single node. If the node
+    // had no requests, then the function
+    // returns false. if there was a request,
+    // then true is returned
+    bool serviceBusNode(unsigned int address);
     
     // Broadcasts a message to all nodes except
     // the source of the transmission
-    void broadcastBusRequest(BusRequest* r);  
+    void broadcastBusRequest(BusRequest* r);
+    
 
 };
 

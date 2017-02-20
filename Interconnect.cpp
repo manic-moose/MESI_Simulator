@@ -8,25 +8,43 @@ void Interconnect::Tick(void) {
 }
 
 void Interconnect::serviceBusNodes(void) {
+    if (nodeLocked) {
+        // Node has exclusive access to the bus
+        serviceBusNode(lockedAddress);
+        return;
+    }
     for(vector<unsigned int>::iterator it = priorityQueue->begin(); it < priorityQueue->end(); it++) {
         unsigned int address = (*it);
-        BusNode* txNode = getNode(address);
-        if (txNode->requestsTransaction()) {
-            BusRequest* request = txNode->initiateBusTransaction();
-            unsigned int requestAdx  = request->targetAddress;
-            if (requestAdx == BROADCAST_ADX) {
-                broadcastBusRequest(request);
-            } else {
-                BusNode* receiverNode = getNode(requestAdx);
-                receiverNode->acceptBusTransaction(request);
-            }
-            // We're now done with the BusRequest, so lets delete it.
-            delete request;
-            // Only handle a single bus communication in each service
-            // cycle (one per clock tick)
+        // Only handle a single bus communication in each service
+        // cycle (one per clock tick)
+        if (serviceBusNode(address)) {
             return;
         }
     }
+}
+
+bool Interconnect::serviceBusNode(unsigned int address) {
+    BusNode* txNode = getNode(address);
+    if (txNode->requestsLock()) {
+        lockedAddress = address;
+        nodeLocked = true;
+    } else {
+        nodeLocked = false;
+    }
+    if (txNode->requestsTransaction()) {
+        BusRequest* request = txNode->initiateBusTransaction();
+        unsigned int requestAdx  = request->targetAddress;
+        if (requestAdx == BROADCAST_ADX) {
+            broadcastBusRequest(request);
+        } else {
+            BusNode* receiverNode = getNode(requestAdx);
+            receiverNode->acceptBusTransaction(request);
+        }
+        // We're now done with the BusRequest, so lets delete it.
+        delete request;
+        return true;
+    }
+    return false;
 }
 
 void Interconnect::broadcastBusRequest(BusRequest* r) {
