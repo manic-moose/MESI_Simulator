@@ -3,16 +3,15 @@
 #include <iostream>
 
 void Interconnect::Tick(void) {
-    serviceBusNodes();
-    updatePriorityQueue();
+    if (nodeLocked) {
+        serviceBusNode(lockedAddress);
+    } else {
+        serviceBusNodes();
+        updatePriorityQueue();
+    }
 }
 
 void Interconnect::serviceBusNodes(void) {
-    if (nodeLocked) {
-        // Node has exclusive access to the bus
-        serviceBusNode(lockedAddress);
-        return;
-    }
     for(vector<unsigned int>::iterator it = priorityQueue->begin(); it < priorityQueue->end(); it++) {
         unsigned int address = (*it);
         // Only handle a single bus communication in each service
