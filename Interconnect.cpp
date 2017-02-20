@@ -26,8 +26,10 @@ bool Interconnect::serviceBusNode(unsigned int address) {
     BusNode* txNode = getNode(address);
     if (txNode->requestsLock()) {
         lockedAddress = address;
+        txNode->grantLock();
         nodeLocked = true;
     } else {
+        txNode->releaseLock();
         nodeLocked = false;
     }
     if (txNode->requestsTransaction()) {

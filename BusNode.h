@@ -27,13 +27,24 @@ public:
     // as requestsLock returns true.
     virtual bool requestsLock(void) =0;
     
+    // Functions for granting and releasing locks
+    bool hasLock(void);
+    void grantLock(void);
+    void releaseLock(void);
+    
     // Returns the address of this node
     unsigned int getAddress(void);
     virtual void setAddress(unsigned int address);
     
 protected:
     
+    BusNode () {
+        nodeIsLocked = false;   
+    }
+    
     unsigned int nodeAddress;
+    
+    bool nodeIsLocked;
     
     
 };
