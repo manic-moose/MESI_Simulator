@@ -59,39 +59,43 @@ void CacheSet::updateLRU(unsigned int tag) {
 void CacheSet::updateLRU(CacheLine* line) {
     unsigned int oldLRU = line->getLRU();
     line->setLRU(0);
+    unsigned int lastLRU = 1;
     for (vector<CacheLine*>::iterator it = lineArry.begin(); it < lineArry.end(); it++) {
         CacheLine* line0 = (*it);
         if (line0 != line && line0->isValid()) {
             unsigned int line0LRU = line0->getLRU();
-            if (line0LRU < oldLRU) {
-                line0->setLRU(line0LRU + 1);   
+            if (line0LRU <= oldLRU) {
+                line0->setLRU(lastLRU++);   
             }
         }
     }
 }
 
 CacheLine* CacheSet::selectLineForEviction(void) {
-    vector<CacheLine*> dirtyLines;
-    vector<CacheLine*> cleanLines;
+    vector<CacheLine*>* dirtyLines = new vector<CacheLine*>;
+    vector<CacheLine*>* cleanLines = new vector<CacheLine*>;
     for (vector<CacheLine*>::iterator it = lineArry.begin(); it < lineArry.end(); it++) {
         CacheLine* line = (*it);
         if (!line->isValid()) {
             return NULL;   
         }
         if (line->isDirty()) {
-            dirtyLines.push_back(line);
+            dirtyLines->push_back(line);
         } else {
-            cleanLines.push_back(line);
+            cleanLines->push_back(line);
         }
     }
-    if (cleanLines.size() > 0) {
-        CacheLine* selectedLine = findLRU(&cleanLines);
-        return selectedLine;
+    CacheLine* selectedLine;
+    if (cleanLines->size() > 0) {
+        selectedLine = findLRU(cleanLines);
     }
-    if (dirtyLines.size() > 0) {
-        CacheLine* selectedLine = findLRU(&dirtyLines);
-        return selectedLine;
-    }    
+    else if (dirtyLines->size() > 0) {
+        selectedLine = findLRU(dirtyLines);
+    }
+    assert(selectedLine != NULL);
+    delete dirtyLines;
+    delete cleanLines;
+    return selectedLine;
 }
 
 CacheLine* CacheSet::evict(void) {
