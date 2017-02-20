@@ -7,7 +7,9 @@
 class DummyNode : public BusNode {
     
 public:
-    DummyNode() : BusNode() {}
+    DummyNode() : BusNode() {
+        lockMe = false;
+    }
     
     void acceptBusTransaction(BusRequest* d);
     BusRequest* initiateBusTransaction(void);
@@ -16,10 +18,14 @@ public:
     
     void sendNewTransaction(unsigned int adx, unsigned int code, unsigned int payload);
     
+    void setRequestsLock(bool l);
+    
 private:
     
     unsigned int adx;
     bool hasRequest;
+    
+    bool lockMe;
     
     BusRequest* pendingReq;
     

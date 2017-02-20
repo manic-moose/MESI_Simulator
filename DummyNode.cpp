@@ -21,7 +21,7 @@ bool DummyNode::requestsTransaction(void) {
 }
 
 bool DummyNode::requestsLock(void) {
-    return false;
+    return lockMe;
 }
 
 void DummyNode::setHasRequest(bool value) {
@@ -36,4 +36,8 @@ void DummyNode::sendNewTransaction(unsigned int adx, unsigned int code, unsigned
     r->payload = payload;
     setHasRequest(true);
     pendingReq = r;
+}
+
+void DummyNode::setRequestsLock(bool l) {
+    lockMe = l;
 }

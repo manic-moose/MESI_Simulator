@@ -38,5 +38,22 @@ int main (void) {
     i->Tick();
     i->Tick();
     
+    cout << " Setting the lock flag" << endl;
+    node1->setRequestsLock(true);
+    i->Tick();
+    i->Tick();
+    cout << "inserting new transaction to node that does not have lock access" << endl;
+    node2->sendNewTransaction(2,4,22);
+    i->Tick();
+    i->Tick();
+    i->Tick();
+    i->Tick();
+    cout << "Disabling lock flag" << endl;
+    node1->setRequestsLock(false);
+    i->Tick();
+    i->Tick();
+    i->Tick();
+    
+    
     return 0;
 }
