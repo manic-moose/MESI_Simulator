@@ -2,9 +2,23 @@
 
 void Processor::Tick(void) {
     // Propagate clock to the cache controller
+    reportState();
     cacheController->Tick();
-    cout << "Cache Controller Tick" << endl;
     transitionState();
+}
+
+void Processor::reportState(void) {
+   switch(currentState) {
+        case IDLE_STATE:
+            cout << "Current State Idle...";
+            break;
+        case CHECKOPTYPE_STATE:
+            cout << "Current State CheckOpType...";
+            break;
+        case MEMORYRETURNWAIT_STATE:
+            cout << "Current State MemoryReturnWait...";
+            break;
+    }
 }
 
 void Processor::Idle_Action(void) {
@@ -34,8 +48,10 @@ Processor::STATES Processor::Idle_Transition(void) {
 }
 
 Processor::STATES Processor::CheckOpType_Transition(void) {
-    if (nextInstIsMemoryOp()) {
+    if (cacheController->hasPendingInstruction()) {
         return MEMORYRETURNWAIT_STATE;
+    } else if (hasPendingInstructions() && nextInstIsMemoryOp()) {
+        return CHECKOPTYPE_STATE;
     } else {
         return IDLE_STATE;
     }
@@ -51,14 +67,13 @@ Processor::STATES Processor::MemoryReturnWait_Transition(void) {
 }
 
 bool Processor::nextInstIsMemoryOp(void) {
-    return (instrQueue->front()->OPCODE == LOAD_CMD || instrQueue->front()->OPCODE == STORE_CMD); 
+    Instruction* nextInstruction = instrQueue->front();
+    return (nextInstruction->OPCODE == LOAD_CMD || nextInstruction->OPCODE == STORE_CMD); 
 }
 
 Processor::STATES Processor::getNextState(void) {
-    cout << "In getNextState()" << endl;
     switch(currentState) {
         case IDLE_STATE:
-            cout << "Got Idle()" << endl;
             return Idle_Transition();
         case CHECKOPTYPE_STATE:
             return CheckOpType_Transition();
@@ -85,12 +100,9 @@ void Processor::callActionFunction(void) {
 
 void Processor::transitionState(void) {
     // Update to the next state
-    cout << "In transition state" << endl;
     STATES nextState = getNextState();
-    cout << "Got next state" << endl;
     currentState = nextState;
     // Call the action function for the current state
-    cout << "State transition. " << endl;
     callActionFunction();
 }
 
@@ -115,7 +127,7 @@ void Processor::insertInstruction(Instruction* i) {
 }
 
 unsigned int Processor::getInstructionCount(void) {
-    return instrQueue->size();
+    return (instrQueue->size() > 0);
 }
 
 Instruction* Processor::getNextInstruction(void) {
@@ -129,6 +141,8 @@ bool Processor::hasPendingInstructions(void) {
 }
 
 void Processor::processInstruction(Instruction* i) {
+    unsigned int opcode = i->OPCODE;
+    assert((opcode == LOAD_CMD) || (opcode == STORE_CMD) || (opcode == NOP_CMD));
     if (i->OPCODE == LOAD_CMD || i->OPCODE == STORE_CMD) {
         insertInstruction(i);
     }
@@ -136,4 +150,9 @@ void Processor::processInstruction(Instruction* i) {
 
 bool Processor::requestsLock(void) {
     return cacheController->requestsLock();
+}
+
+void Processor::setAddress(unsigned int address) {
+    nodeAddress = address;
+    cacheController->setAddress(address);
 }

@@ -4,15 +4,17 @@ using namespace std;
 
 void System::Tick(void) {
     for (int i = 0; i < processors->size(); i++) {
-           Processor* p = processors->at(i);
-            p->Tick();
-            cout << "Tick " << i << endl;
+        Processor* p = processors->at(i);
+        cout << "Processor " << i << "->Tick()...";
+        p->Tick();
+        cout << "Complete" << endl;
     }
-    
+    cout << "Memory->Tick()...";
     memory->Tick();
-    cout << "Tick memory" << endl;
+    cout << "Complete" << endl;
+    cout << "Interconnect->Tick()...";
     interconnect->Tick();
-    cout << "Tick interconnect" << endl;
+    cout << "Complete" << endl;
 }
 
 void System::insertInstruction(Instruction* i, unsigned int processorNum) {

@@ -53,6 +53,8 @@ private:
     Instruction* getNextInstruction(void);
     
     bool nextInstIsMemoryOp(void);
+    
+    void reportState(void);
 
 
 public:
@@ -63,7 +65,7 @@ public:
         } else if (controllerType == MSI_CONTROLLER_TYPE) {
             cout << "MSI Not yet enabled" << endl;
         } else if (controllerType == MESI_CONTROLLER_TYPE) {
-            cout << "MESI Not yet enabled" << endl;
+            cacheController = new MESI_Controller;
         } else {
             cout << "Invalid controller type. Must be one of MI_CONTROLLER_TYPE, MSI_CONTROLLER_TYPE, or MESI_CONTROLLER_TYPE." << endl;
         }
@@ -77,6 +79,7 @@ public:
     BusRequest* initiateBusTransaction(void);
     bool requestsTransaction();
     bool requestsLock(void);
+    void setAddress(unsigned int address);
 
     // Other Public Methods
     bool isIdle(void); // Indicates the processor is read to process the next instruction

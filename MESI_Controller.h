@@ -36,7 +36,8 @@ private:
         CHECK_CACHE_ST_STATE,
         ISSUE_READX_STATE,
         ISSUE_INVALIDATE_STATE,
-        UPDATE_CACHE_ST_STATE
+        UPDATE_CACHE_ST_STATE,
+        RESET_STATE
     } STATES;
     
     STATES currentState;
@@ -44,6 +45,7 @@ private:
     STATES getNextState(void);
     void callActionFunction(void);
     void transitionState(void);
+    void reportState(void);
     
     //Define state transition functions
     STATES Idle_Transition(void);
@@ -54,6 +56,7 @@ private:
     STATES IssueReadX_Transition(void);
     STATES IssueInvalidate_Transition(void);
     STATES UpdateCacheStore_Transition(void);
+    STATES Reset_Transition(void);
     
     //Define state action functions
     void Idle_Action(void);
@@ -64,6 +67,7 @@ private:
     void IssueReadX_Action(void);
     void IssueInvalidate_Action(void);
     void UpdateCacheStore_Action(void);
+    void Reset_Action(void);
     
     // Broadcast a bus request with given command code and payload
     void queueBusCommand(unsigned int command, unsigned int payload);

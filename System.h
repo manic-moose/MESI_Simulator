@@ -3,6 +3,8 @@
 #include "Memory.h"
 #include <vector>
 
+#define BURST_LENGTH 8
+
 using namespace std;
 
 class System {
@@ -18,7 +20,7 @@ public:
     
     System(unsigned int numProcessors, unsigned int controllerType, unsigned int memoryLatency) {
         processors = new vector<Processor*>;
-        memory = new Memory(memoryLatency);
+        memory = new Memory(memoryLatency, BURST_LENGTH);
         interconnect = new Interconnect;
         
         for(int i = 0; i < numProcessors; i++) {

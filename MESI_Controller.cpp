@@ -18,8 +18,42 @@ MESI_Controller::STATES MESI_Controller::getNextState(void) {
             return IssueInvalidate_Transition();
         case UPDATE_CACHE_ST_STATE:
             return UpdateCacheStore_Transition();
+        case RESET_STATE:
+            return Reset_Transition();
     }
     return IDLE_STATE;
+}
+
+void MESI_Controller::reportState(void) {
+    switch(currentState) {
+        case IDLE_STATE:
+            cout << "MESI_Controller Idle State";
+            break;
+        case CHECK_CACHE_LD_STATE:
+            cout << "MESI_Controller CheckCacheLd State";
+            break;
+        case ISSUE_READ_STATE:
+            cout << "MESI_Controller Read State";
+            break;
+        case UPDATE_CACHE_LD_STATE:
+            cout << "MESI_Controller UpdateCacheLd State";
+            break;
+        case CHECK_CACHE_ST_STATE:
+            cout << "MESI_Controller CheckCacheSt State";
+            break;
+        case ISSUE_READX_STATE:
+            cout << "MESI_Controller Readx State";
+            break;
+        case ISSUE_INVALIDATE_STATE:
+            cout << "MESI_Controller Invalidate State";
+            break;
+        case UPDATE_CACHE_ST_STATE:
+            cout << "MESI_Controller UpdateCacheSt State";
+            break;
+        case RESET_STATE:
+            cout << "MESI_Controller Reset State";
+            break;
+    }
 }
 
 void MESI_Controller::callActionFunction(void) {
@@ -47,6 +81,9 @@ void MESI_Controller::callActionFunction(void) {
             break;
         case UPDATE_CACHE_ST_STATE:
             UpdateCacheStore_Action();
+            break;
+        case RESET_STATE:
+            Reset_Action();
             break;
     }
 }
@@ -98,7 +135,7 @@ MESI_Controller::STATES MESI_Controller::IssueRead_Transition(void) {
 
 MESI_Controller::STATES MESI_Controller::UpdateCacheLoad_Transition(void) {
     // No branches here
-    return IDLE_STATE;
+    return RESET_STATE;
 }
 
 MESI_Controller::STATES MESI_Controller::CheckCacheStore_Transition(void) {
@@ -149,18 +186,26 @@ MESI_Controller::STATES MESI_Controller::IssueInvalidate_Transition(void) {
 }
 
 MESI_Controller::STATES MESI_Controller::UpdateCacheStore_Transition(void) {
-    return IDLE_STATE;
+    return RESET_STATE;
+}
+
+MESI_Controller::STATES MESI_Controller::Reset_Transition(void) {
+    return IDLE_STATE;   
 }
 
 //Define state action functions
 void MESI_Controller::Idle_Action(void) {
+
+}
+
+void MESI_Controller::Reset_Action(void) {
     // Reset boolean flags
     gotDataReturnFromBusRead_Memory    = false;
     gotDataReturnFromBusRead_Processor = false;
     snoopedDataReturnFromWriteback     = false;
     awaitingBusRead                    = false;
     pendingInstructionFlag             = false;
-    queuedBusRead                      = false;
+    queuedBusRead                      = false;   
 }
 
 void MESI_Controller::CheckCacheLoad_Action(void) {
