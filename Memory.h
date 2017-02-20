@@ -15,10 +15,10 @@ class Memory : public BusNode {
     
 private:
     
-    unsigned int burstPayload;
     unsigned int burstCounter;
     bool bursting;
     unsigned int burstLen;
+    BusRequest* burstRequest;
     
     unsigned int readLatency;
     vector<MemoryOperation*>* memTracker;
@@ -34,7 +34,6 @@ public:
         readLatency = latency;
         memTracker = new vector<MemoryOperation*>;
         busReqQueue = new queue<BusRequest*>;
-        burstPayload = 0;
         bursting = false;
         burstLen = burstLength;
         burstCounter = 0;

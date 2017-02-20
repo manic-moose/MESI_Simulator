@@ -26,17 +26,20 @@ bool Memory::requestsTransaction(void) {
 }
 
 bool Memory::requestsLock(void) {
-    return false;   
+    return bursting;   
 }
 
 void Memory::Tick(void) {
     if (bursting) {
         if (++burstCounter == burstLen) {
-            
+            busReqQueue->push(burstRequest);
+            bursting = false;
+            burstCounter = 0;
         }
+    } else {
+        updateReadAges();
+        queueDataReturns();
     }
-    updateReadAges();
-    queueDataReturns();
 }
 
 void Memory::updateReadAges(void) {
@@ -58,9 +61,10 @@ void Memory::queueDataReturns(void) {
             dataReturn->targetAddress = BROADCAST_ADX;
             dataReturn->sourceAddress = getAddress();
             dataReturn->payload       = adx;
-            busReqQueue->push(dataReturn);
-            // Erase this operation from the tracker
+            burstRequest = dataReturn;
             memTracker->erase(memTracker->begin() + i);
+            bursting = true;
+            return;
         }
     }
 }
