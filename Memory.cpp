@@ -31,10 +31,15 @@ bool Memory::requestsLock(void) {
 
 void Memory::Tick(void) {
     if (bursting) {
-        if (++burstCounter == burstLen) {
+        if (burstCounter == burstLen) {
             busReqQueue->push(burstRequest);
             bursting = false;
             burstCounter = 0;
+        }
+        if (hasLock()) {
+            // Only increment if the lock has been granted
+            // to simulate bursting out the memory
+            burstCounter++;   
         }
     } else {
         updateReadAges();
