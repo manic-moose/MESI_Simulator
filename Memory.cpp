@@ -3,7 +3,7 @@
 using namespace std;
 
 void Memory::acceptBusTransaction(BusRequest* d) {
-    if (d->commandCode == BUSREAD) {
+    if (d->commandCode == BUSREAD || d->commandCode == BUSREADX) {
         MemoryOperation* o = new MemoryOperation;
         o->address = d->payload;
         o->age = 0;
@@ -30,6 +30,11 @@ bool Memory::requestsLock(void) {
 }
 
 void Memory::Tick(void) {
+    if (bursting) {
+        if (++burstCounter == burstLen) {
+            
+        }
+    }
     updateReadAges();
     queueDataReturns();
 }
