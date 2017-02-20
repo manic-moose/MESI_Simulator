@@ -34,6 +34,8 @@ public:
     
     void insertInstruction(Instruction* i, unsigned int processorNum);
     
+    bool hasPendingInstructions(unsigned int processorNum);
+    
     
     void Tick(void);
 

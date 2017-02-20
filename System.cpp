@@ -22,3 +22,9 @@ void System::insertInstruction(Instruction* i, unsigned int processorNum) {
     Processor* p = processors->at(processorNum);
     p->processInstruction(i);
 }
+
+bool System::hasPendingInstructions(unsigned int processorNum) {
+    assert(processorNum < processors->size());
+    Processor* p = processors->at(processorNum);
+    return p->hasPendingInstructions();
+}
