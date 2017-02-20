@@ -17,7 +17,15 @@ public:
     virtual BusRequest* initiateBusTransaction(void) = 0;
     
     // Indicates that this node has a pending transaction to send
-    virtual bool requestsTransaction() =0;
+    virtual bool requestsTransaction(void) =0;
+    
+    // Indicates that this BusNode wants to lock control
+    // of the bus. If true, the next time this node is
+    // checked for service, it will gain a lock on the bus.
+    // It will then be the only bus allowed to initiate bus transactions
+    // while the lock is maintained. The lock will be maintained as long
+    // as requestsLock returns true.
+    virtual bool requestsLock(void) =0;
     
     // Returns the address of this node
     unsigned int getAddress(void);

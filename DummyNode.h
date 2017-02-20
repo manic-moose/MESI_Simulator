@@ -11,7 +11,8 @@ public:
     
     void acceptBusTransaction(BusRequest* d);
     BusRequest* initiateBusTransaction(void);
-    bool requestsTransaction();
+    bool requestsTransaction(void);
+    bool requestsLock(void);
     
     void sendNewTransaction(unsigned int adx, unsigned int code, unsigned int payload);
     

@@ -35,7 +35,8 @@ public:
         
     BusRequest* initiateBusTransaction(void);
 
-    bool requestsTransaction();
+    bool requestsTransaction(void);
+    bool requestsLock(void);
     
     void Tick(void);
 

@@ -28,6 +28,7 @@ public:
         
     // BusNode functions
     bool requestsTransaction(void);
+    bool requestsLock(void);
     BusRequest* initiateBusTransaction(void);
     
     

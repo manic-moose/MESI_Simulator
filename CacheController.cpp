@@ -36,6 +36,10 @@ bool CacheController::requestsTransaction(void) {
     return pendingBusReqFlag;
 }
 
+bool CacheController::requestsLock(void) {
+    return false;   
+}
+
 void CacheController::issueNextBusRequest(void) {
     if(!hasQueuedBusRequest()) {
         // No bus requests on the queue

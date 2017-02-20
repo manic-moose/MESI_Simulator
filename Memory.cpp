@@ -21,8 +21,12 @@ BusRequest* Memory::initiateBusTransaction(void) {
     return nextRequest;
 }
 
-bool Memory::requestsTransaction() {
+bool Memory::requestsTransaction(void) {
     return (busReqQueue->size() > 0);
+}
+
+bool Memory::requestsLock(void) {
+    return false;   
 }
 
 void Memory::Tick(void) {

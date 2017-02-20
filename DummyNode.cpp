@@ -16,8 +16,12 @@ BusRequest* DummyNode::initiateBusTransaction(void) {
     return pendingReq;
 }
 
-bool DummyNode::requestsTransaction() {
+bool DummyNode::requestsTransaction(void) {
     return hasRequest;
+}
+
+bool DummyNode::requestsLock(void) {
+    return false;
 }
 
 void DummyNode::setHasRequest(bool value) {

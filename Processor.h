@@ -76,6 +76,7 @@ public:
     void acceptBusTransaction(BusRequest* d);
     BusRequest* initiateBusTransaction(void);
     bool requestsTransaction();
+    bool requestsLock(void);
 
     // Other Public Methods
     bool isIdle(void); // Indicates the processor is read to process the next instruction

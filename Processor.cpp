@@ -133,3 +133,7 @@ void Processor::processInstruction(Instruction* i) {
         insertInstruction(i);
     }
 }
+
+bool Processor::requestsLock(void) {
+    return cacheController->requestsLock();
+}
