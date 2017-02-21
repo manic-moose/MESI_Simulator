@@ -339,7 +339,7 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                     } else if (cache->isModified(address)) {
                         queueBusCommand(BUSWRITE, address);
                     }
-                    cache->setInvalid(address);
+                    cache->invalidate(address);
                 }
                 if (dispatchedAddress == address) {
                     
@@ -375,7 +375,7 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // waiting for data for, then additional actions may be required
                 if (cache->contains(address)) {
                     assert(!cache->isModified(address));
-                    cache->setInvalid(address);
+                    cache->invalidate(address);
                 }
                 if (dispatchedAddress == address) {
                     
@@ -417,7 +417,7 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                     } else if (cache->isModified(address)) {
                         queueBusCommand(BUSWRITE, address);
                     }
-                    cache->setInvalid(address);
+                    cache->invalidate(address);
                 }
                 break;
             case BUSWRITE:
@@ -447,7 +447,7 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // is not modified and invalidate the copy if it exists.
                 if (cache->contains(address)) {
                     assert(!cache->isModified(address));
-                    cache->setInvalid(address);
+                    cache->invalidate(address);
                 }
                 break;
         }
