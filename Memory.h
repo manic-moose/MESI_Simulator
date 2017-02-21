@@ -11,9 +11,12 @@ class Memory : public BusNode {
     struct MemoryOperation {
         unsigned int address;
         unsigned int age;
+        unsigned int returnAddress;
     };
     
 private:
+    
+    unsigned long memSendCounts;
     
     unsigned int burstCounter;
     bool bursting;
@@ -28,6 +31,8 @@ private:
     
     void queueDataReturns(void);
     
+    unsigned int getOldestOp(void);
+    
 public:
     
     Memory(unsigned int latency, unsigned int burstLength) {
@@ -37,6 +42,7 @@ public:
         bursting = false;
         burstLen = burstLength;
         burstCounter = 0;
+        memSendCounts = 0;
     }
     
     void acceptBusTransaction(BusRequest* d);
@@ -47,5 +53,7 @@ public:
     bool requestsLock(void);
     
     void Tick(void);
+    
+    unsigned long getMemCount(void);
 
 };

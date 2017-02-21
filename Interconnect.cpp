@@ -7,8 +7,8 @@ void Interconnect::Tick(void) {
         serviceBusNode(lockedAddress);
     } else {
         serviceBusNodes();
-        updatePriorityQueue();
     }
+    updatePriorityQueue();
 }
 
 void Interconnect::serviceBusNodes(void) {
