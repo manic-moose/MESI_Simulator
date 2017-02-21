@@ -27,31 +27,31 @@ MESI_Controller::STATES MESI_Controller::getNextState(void) {
 void MESI_Controller::reportState(void) {
     switch(currentState) {
         case IDLE_STATE:
-            cout << "MESI_Controller Idle State";
+            cout << "MESI_Controller Idle State...";
             break;
         case CHECK_CACHE_LD_STATE:
-            cout << "MESI_Controller CheckCacheLd State";
+            cout << "MESI_Controller CheckCacheLd State...";
             break;
         case ISSUE_READ_STATE:
-            cout << "MESI_Controller Read State";
+            cout << "MESI_Controller Read State...";
             break;
         case UPDATE_CACHE_LD_STATE:
-            cout << "MESI_Controller UpdateCacheLd State";
+            cout << "MESI_Controller UpdateCacheLd State...";
             break;
         case CHECK_CACHE_ST_STATE:
-            cout << "MESI_Controller CheckCacheSt State";
+            cout << "MESI_Controller CheckCacheSt State...";
             break;
         case ISSUE_READX_STATE:
-            cout << "MESI_Controller Readx State";
+            cout << "MESI_Controller Readx State...";
             break;
         case ISSUE_INVALIDATE_STATE:
-            cout << "MESI_Controller Invalidate State";
+            cout << "MESI_Controller Invalidate State...";
             break;
         case UPDATE_CACHE_ST_STATE:
-            cout << "MESI_Controller UpdateCacheSt State";
+            cout << "MESI_Controller UpdateCacheSt State...";
             break;
         case RESET_STATE:
-            cout << "MESI_Controller Reset State";
+            cout << "MESI_Controller Reset State...";
             break;
     }
 }
@@ -89,6 +89,7 @@ void MESI_Controller::callActionFunction(void) {
 }
 
 void MESI_Controller::transitionState(void) {
+    reportState();
     STATES nextState = getNextState();
     currentState = nextState;
     callActionFunction();
@@ -124,12 +125,10 @@ MESI_Controller::STATES MESI_Controller::CheckCacheLoad_Transition(void) {
 }
 
 MESI_Controller::STATES MESI_Controller::IssueRead_Transition(void) {
-    if (gotDataReturnFromBusRead_Memory || gotDataReturnFromBusRead_Processor) {
-        // Data was returned from the bus
-        return UPDATE_CACHE_LD_STATE;
-    } else {
-        // Still waiting on data to return from the bus read
+    if (awaitingBusRead) {
         return ISSUE_READ_STATE;   
+    } else {
+        return UPDATE_CACHE_LD_STATE;
     }
 }
 
@@ -171,12 +170,10 @@ MESI_Controller::STATES MESI_Controller::CheckCacheStore_Transition(void) {
 }
 
 MESI_Controller::STATES MESI_Controller::IssueReadX_Transition(void) {
-    if (gotDataReturnFromBusRead_Memory || gotDataReturnFromBusRead_Processor) {
-        // Data was returned from the bus
-        return UPDATE_CACHE_ST_STATE;
+    if (awaitingBusRead) {
+        return ISSUE_READX_STATE;
     } else {
-        // Still waiting on data to return from the bus read
-        return ISSUE_READX_STATE;   
+        return UPDATE_CACHE_ST_STATE;
     }
 }
 
@@ -205,7 +202,10 @@ void MESI_Controller::Reset_Action(void) {
     snoopedDataReturnFromWriteback     = false;
     awaitingBusRead                    = false;
     pendingInstructionFlag             = false;
-    queuedBusRead                      = false;   
+    queuedBusRead                      = false;
+    sawBusReadToMyIncomingAddress      = false;
+    sawBusReadXToMyIncomingAddress     = false;
+    sawInvalidateToMyIncomingAddress   = false;
 }
 
 void MESI_Controller::CheckCacheLoad_Action(void) {
@@ -233,6 +233,12 @@ void MESI_Controller::UpdateCacheLoad_Action(void) {
     // that at least one other cache contains
     // a copy of the shared data.
     unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    if (sawBusReadXToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
+        // While waiting for data, observed a bus request for the same address.
+        // Rather than updating the cache, the data would just be forwarded to the
+        // processor.
+        return;   
+    }
     if (!cache->contains(address)) {
         // We didn't already have the data, so it must have come from the bus
         assert(gotDataReturnFromBusRead_Memory || gotDataReturnFromBusRead_Processor || snoopedDataReturnFromWriteback);
@@ -245,6 +251,7 @@ void MESI_Controller::UpdateCacheLoad_Action(void) {
                 unsigned int setNumber      = evictedLine->getSetNumber();
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                cout << "0  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                 queueBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
@@ -286,6 +293,11 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
     // In this state, the cache line is being updated
     // to MODIFIED.
     unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    if (sawBusReadToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
+        // Saw an operation to this address while waiting for data to return. Instead of updating the cache,
+        // a write request is issued to memory immediately. No actionst to take here
+        return;
+    }
     if (!cache->contains(address)) {
         // First check that the cache has an empty space, and if not, we need to evict a line
         // and potentially write it back out.
@@ -296,6 +308,7 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
                 unsigned int setNumber      = evictedLine->getSetNumber();
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                cout << "1  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                 queueBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
@@ -306,8 +319,9 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
 }
 
 void MESI_Controller::acceptBusTransaction(BusRequest* d) {
-    unsigned int cmd     = d->commandCode;
-    unsigned int address = d->payload;
+    unsigned int cmd       = d->commandCode;
+    unsigned int address   = d->payload;
+    unsigned int sourceAdx = d->sourceAddress;
     if (awaitingBusRead) {
         assert(dispatchedBusRead != NULL);
         unsigned int dispatchedAddress = dispatchedBusRead->payload;
@@ -319,14 +333,19 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // waiting for data for, then additional actions may be required
                 if (cache->contains(address)) {
                     if (cache->isExclusive(address) || cache->isShared(address)) {
-                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
+                        queueBusCommand(DATA_RETURN_PROCESSOR, address, sourceAdx);
                     } else if (cache->isModified(address)) {
+                        cout << "2  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                         queueBusCommand(BUSWRITE, address);
                     }
                     cache->setShared(address);
                 }
                 if (dispatchedAddress == address) {
-                    
+                    sawBusReadToMyIncomingAddress = true;
+                    if (dispatchedCmd == BUSREADX) {
+                        queueBusCommand(BUSWRITE,dispatchedAddress);
+                        awaitingBusRead = false;
+                    }
                 }
                 break;
             case BUSREADX:
@@ -335,14 +354,19 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // waiting for data for, then additional actions may be required
                 if (cache->contains(address)) {
                     if (cache->isExclusive(address) || cache->isShared(address)) {
-                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
+                        queueBusCommand(DATA_RETURN_PROCESSOR, address, sourceAdx);
                     } else if (cache->isModified(address)) {
+                        cout << "3  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                         queueBusCommand(BUSWRITE, address);
                     }
                     cache->invalidate(address);
                 }
                 if (dispatchedAddress == address) {
-                    
+                    sawBusReadXToMyIncomingAddress = true;
+                    if (dispatchedCmd == BUSREADX) {
+                        queueBusCommand(BUSWRITE,dispatchedAddress);
+                        awaitingBusRead = false;
+                    }
                 }
                 break;
             case BUSWRITE:
@@ -378,7 +402,11 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                     cache->invalidate(address);
                 }
                 if (dispatchedAddress == address) {
-                    
+                    sawInvalidateToMyIncomingAddress = true;
+                    if (dispatchedCmd == BUSREADX) {
+                        queueBusCommand(BUSWRITE,dispatchedAddress);
+                        awaitingBusRead = false;
+                    }
                 }
                 break;
         }
@@ -397,8 +425,9 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // the cache line should be updated to the shared state.
                 if (cache->contains(address)) {
                     if (cache->isExclusive(address) || cache->isShared(address)) {
-                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
+                        queueBusCommand(DATA_RETURN_PROCESSOR, address, sourceAdx);
                     } else if (cache->isModified(address)) {
+                        cout << "4  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                         queueBusCommand(BUSWRITE, address);
                     }
                     cache->setShared(address);
@@ -413,8 +442,9 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // to invalid.
                 if (cache->contains(address)) {
                     if (cache->isExclusive(address) || cache->isShared(address)) {
-                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
+                        queueBusCommand(DATA_RETURN_PROCESSOR, address, sourceAdx);
                     } else if (cache->isModified(address)) {
+                        cout << "5  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                         queueBusCommand(BUSWRITE, address);
                     }
                     cache->invalidate(address);
@@ -426,6 +456,9 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
                 // a BUSWRITE, it is safe to assume that this cache does not contain the line
                 // and can ignore this. assert that this data is not present in our cache
                 // just to help catch bugs
+                if (cache->contains(address)) {
+                    cout << " 0 SELF: " << getAddress() << " ADDRESS: " << address << endl;
+                }
                 assert(!cache->contains(address));
                 break;
             case DATA_RETURN_MEMORY:
@@ -457,8 +490,17 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
 void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
-    r->payload       = payload;
+    r->payload       = cache->getLineAlignedAddress(payload);
     r->targetAddress = BROADCAST_ADX;
+    r->sourceAddress = getAddress();
+    addNewBusRequest(r);
+}
+
+void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+    BusRequest* r    = new BusRequest;
+    r->commandCode   = command;
+    r->payload       = cache->getLineAlignedAddress(payload);
+    r->targetAddress = targetAdx;
     r->sourceAddress = getAddress();
     addNewBusRequest(r);
 }

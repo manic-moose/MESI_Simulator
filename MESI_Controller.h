@@ -24,6 +24,12 @@ private:
     bool gotDataReturnFromBusRead_Memory;     // Normal Return from memory
     bool gotDataReturnFromBusRead_Processor;  // Normal cache-to-cache transfer
     bool snoopedDataReturnFromWriteback;      // Snooped data from cache writeback
+    
+    // Flags to handle cases where bus operations occurred while waiting for a memory return
+    bool sawBusReadToMyIncomingAddress;
+    bool sawBusReadXToMyIncomingAddress;
+    bool sawInvalidateToMyIncomingAddress;
+    
     // Just an indicator that the current required bus read was already queued
     // so that in the BUSREAD/BUSREADX states, multiple reads are not issued
     bool queuedBusRead;
@@ -71,7 +77,8 @@ private:
     
     // Broadcast a bus request with given command code and payload
     void queueBusCommand(unsigned int command, unsigned int payload);
-   
+    // Broadcast a bus request with given command code and payload
+    void queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx);
     
 public:
     
@@ -80,6 +87,9 @@ public:
         gotDataReturnFromBusRead_Processor = false;
         queuedBusRead                      = false;
         snoopedDataReturnFromWriteback     = false;
+        sawBusReadToMyIncomingAddress      = false;
+        sawBusReadXToMyIncomingAddress     = false;
+        sawInvalidateToMyIncomingAddress   = false;
     }
     
     // BusNode receiver function
