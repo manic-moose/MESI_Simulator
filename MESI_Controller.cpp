@@ -213,6 +213,7 @@ void MESI_Controller::IssueRead_Action(void) {
         queuedBusRead = true;
         awaitingDataLocal = true;
         awaitingBusRead = true;
+        awaitingDataLocal_Address = address;
     }
 }
 
@@ -281,7 +282,7 @@ void MESI_Controller::IssueReadX_Action(void) {
         queuedBusRead = true;
         awaitingDataLocal = true;
         awaitingDataLocal_Address = address;
-                awaitingBusRead = true;
+        awaitingBusRead = true;
     }
 }
 
@@ -315,8 +316,13 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
         }
         cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
         cache->insertLine(address);   
+        cache->setModified(address);
+    } else {
+        if (!cache->isModified(address)) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
+            cache->setModified(address);
+        }
     }
-    cache->setModified(address);
     cache->updateLRU(address);
 }
 
@@ -363,6 +369,9 @@ void MESI_Controller::handleBusRead(BusRequest* d) {
             cout << "4  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
             queueBusCommand(BUSWRITE, address);
         }
+        if (!cache->setShared(address)) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED  Payload: " << address << endl;
+        }
         cache->setShared(address);
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
         // We've queued up a read command to that address...
@@ -386,7 +395,7 @@ void MESI_Controller::handleBusReadX(BusRequest* d) {
             cout << "5  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
             queueBusCommand(BUSWRITE, address);
         }
-        cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE  Payload: " << address << endl;
+        cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
         cache->invalidate(address);
         assert(!cache->contains(address));
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
@@ -447,7 +456,7 @@ void MESI_Controller::handleInvalidate(BusRequest* d) {
     unsigned int address = d->payload;
     if (cache->contains(address)) {
         //assert(!cache->isModified(address));
-        cout << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE  Payload: " << address << endl;
+        cout << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_1  Payload: " << address << endl;
         cache->invalidate(address);
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
         // We've queued up a read command to that address...
@@ -475,7 +484,5 @@ void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload
 
 bool MESI_Controller::awaitingDataRemote(unsigned int address) {
     assert(dispatchedBusRead != NULL);
-    cout << getAddress() << " Dispatched Bus Read Payload = " << (cache->getLineAlignedAddress(currentInstruction->ADDRESS)) << " address = " << address << endl;
-    cout << "awaitingDataRemote() = " << (((cache->getLineAlignedAddress(currentInstruction->ADDRESS)) == address) && awaitingBusRead) ;
     return (((cache->getLineAlignedAddress(currentInstruction->ADDRESS)) == address) && awaitingBusRead);
 }

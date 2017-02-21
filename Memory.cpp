@@ -9,7 +9,19 @@ void Memory::acceptBusTransaction(BusRequest* d) {
         o->age = 0;
         o->returnAddress = d->sourceAddress;
         memTracker->push_back(o);
-    } // Writes can be ignored - nothing to actually do.
+    } else if (d->commandCode == DATA_RETURN_PROCESSOR) {
+        // Need to cancel a currently pending memory op for this
+        unsigned int targetAddress = d->targetAddress;
+        unsigned int payloadValue = d->payload;
+        for (unsigned int i = 0; i < memTracker->size(); i++) {
+            MemoryOperation* p = memTracker->at(i);
+            if ((p->returnAddress == targetAddress) && (p->address == payloadValue)) {
+                memTracker->erase(memTracker->begin() + i);
+                return;
+            }
+        }
+        
+    }
     
     // Still may want to handle cancelling memory operations
     // that are serviced by cache to cache transfers

@@ -92,7 +92,14 @@ void CacheController::invalidateCacheItem(unsigned int memoryAdx) {
 
 void CacheController::handleMemoryAccess(Instruction* i) {
     assert(!hasPendingInstruction());
+    
     currentInstruction = i;
+    unsigned int address = cache->getLineAlignedAddress(i->ADDRESS);
+    if (i->OPCODE == STORE_CMD) {
+        cout << "Controller: " << getAddress() << " Code: INSTRUCTION STORE  Payload: " << address << endl;
+    } else if (i->OPCODE == LOAD_CMD) {
+        cout << "Controller: " << getAddress() << " Code: INSTRUCTION LOAD  Payload: " << address << endl;
+    }
     pendingInstructionFlag = true;
 }
 
