@@ -26,6 +26,8 @@ private:
     CacheController* cacheController;
     queue<Instruction*>* instrQueue;
     
+    unsigned long numberMemoryOperations;
+    
     typedef enum E_STATES {
         IDLE_STATE,
         CHECKOPTYPE_STATE,
@@ -69,6 +71,7 @@ public:
         } else {
             cout << "Invalid controller type. Must be one of MI_CONTROLLER_TYPE, MSI_CONTROLLER_TYPE, or MESI_CONTROLLER_TYPE." << endl;
         }
+        numberMemoryOperations = 0;
     }
 
     // External Event Inputs
@@ -96,6 +99,8 @@ public:
     // Function to call to give the processor a new instruction. If
     // the instruction is not a memory instruction, then it is discarded
     void processInstruction(Instruction* i);
+    
+    unsigned long getTotalMemoryOps(void);
     
 };
 #endif //PROCESSOR_H

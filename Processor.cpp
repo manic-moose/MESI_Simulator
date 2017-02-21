@@ -31,6 +31,7 @@ void Processor::CheckOpType_Action(void) {
         // Send the memory instruction to the cache
         // controller for processing.
         cacheController->handleMemoryAccess(i);
+        numberMemoryOperations++;
     }
 }
 
@@ -155,4 +156,8 @@ bool Processor::requestsLock(void) {
 void Processor::setAddress(unsigned int address) {
     nodeAddress = address;
     cacheController->setAddress(address);
+}
+
+unsigned long Processor::getTotalMemoryOps(void) {
+    return numberMemoryOperations;
 }
