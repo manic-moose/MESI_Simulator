@@ -89,9 +89,11 @@ void MESI_Controller::callActionFunction(void) {
 }
 
 void MESI_Controller::transitionState(void) {
+    cout << getAddress() << " Transition  ";
     reportState();
     STATES nextState = getNextState();
     currentState = nextState;
+    reportState();
     callActionFunction();
 }
 
@@ -222,6 +224,7 @@ void MESI_Controller::IssueRead_Action(void) {
         unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
         queueBusCommand(BUSREAD, address);
         queuedBusRead = true;
+        awaitingBusRead = true;
     }
 }
 
@@ -281,6 +284,7 @@ void MESI_Controller::IssueReadX_Action(void) {
         unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
         queueBusCommand(BUSREADX, address);
         queuedBusRead = true;
+        awaitingBusRead = true;
     }
 }
 
