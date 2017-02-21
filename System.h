@@ -36,6 +36,8 @@ public:
     
     bool hasPendingInstructions(unsigned int processorNum);
     
+    void reportMemoryOpStatistics(void);
+    
     
     void Tick(void);
 
