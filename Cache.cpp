@@ -91,7 +91,7 @@ bool Cache::isExclusive(unsigned int adx) {
     unsigned int setNumber = getAdxSetNum(adx);
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
-    set->isExclusive(tag);
+    return set->isExclusive(tag);
 }
 
 bool Cache::isModified(unsigned int adx) {
@@ -99,7 +99,7 @@ bool Cache::isModified(unsigned int adx) {
     unsigned int setNumber = getAdxSetNum(adx);
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
-    set->isModified(tag);
+    return set->isModified(tag);
 }
 
 bool Cache::isShared(unsigned int adx) {
@@ -107,7 +107,7 @@ bool Cache::isShared(unsigned int adx) {
     unsigned int setNumber = getAdxSetNum(adx);
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
-    set->isShared(tag);
+    return set->isShared(tag);
 }
 
 bool Cache::isInvalid(unsigned int adx) {
@@ -115,7 +115,7 @@ bool Cache::isInvalid(unsigned int adx) {
     unsigned int setNumber = getAdxSetNum(adx);
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
-    set->isInvalid(tag);
+    return set->isInvalid(tag);
 }
 
 void Cache::setExclusive(unsigned int adx) {
