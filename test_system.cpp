@@ -2,9 +2,9 @@
 #include "Instruction.h"
 #include <stdlib.h>
 
-#define NUM_PROCESSORS 16
-#define MEMORY_LATENCY 5
-#define NUM_TICKS 100000
+#define NUM_PROCESSORS 4
+#define MEMORY_LATENCY 100
+#define NUM_TICKS 1000000
 
 int main(void) {
     
@@ -17,9 +17,9 @@ int main(void) {
             if (!(s->hasPendingInstructions(pNum))) {
                 Instruction* inst = new Instruction;
                 inst->OPCODE  = rand() % 3;
-                inst->ADDRESS = rand() % 10000;
+                inst->ADDRESS = rand() % 0xFFFF;
                 if (inst->OPCODE == LOAD_CMD || inst->OPCODE == STORE_CMD) {
-                    cout << "P" << pNum << " OPCODE: " << inst->OPCODE << "  Address: " << inst->ADDRESS << endl;
+                    cout << "Instruction Insert - " << "P" << pNum << " OPCODE: " << inst->OPCODE << "  Address: " << inst->ADDRESS << endl;
                 }
                 s->insertInstruction(inst,pNum);
             }
@@ -27,7 +27,7 @@ int main(void) {
         s->Tick();
     }
     
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 5; i++) {
         s->Tick();   
     }
     s->reportMemoryOpStatistics();

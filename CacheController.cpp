@@ -33,33 +33,43 @@ void CacheController::deleteBusRequestWithParams(unsigned int code, unsigned int
 }
 
 bool CacheController::requestsTransaction(void) {
-    return pendingBusReqFlag;
+    return busReqQueue->size() > 0;
 }
 
 bool CacheController::requestsLock(void) {
-    return false;   
+    return false;
+    //return requestsTransaction();   
 }
 
-void CacheController::issueNextBusRequest(void) {
-    if(!hasQueuedBusRequest()) {
-        // No bus requests on the queue
-        return;
-    }
-    // Ensure no requests are currently being waited on.
-    // This function should only be called if the previous
-    // bus request has gone out already
-    assert(!requestsTransaction());
+BusRequest* CacheController::initiateBusTransaction(void) {
     nextToIssue = busReqQueue->back();
     busReqQueue->pop_back();
-    pendingBusReqFlag = true;
+    unsigned int code = nextToIssue->commandCode;
+    unsigned int payload = nextToIssue->payload;
+    switch (code) {
+        case BUSREAD:
+            cout << "Controller: " << getAddress() << " Code: BUSREAD                Payload: " << payload << endl;
+            break;
+        case BUSREADX:
+            cout << "Controller: " << getAddress() << " Code: BUSREADX               Payload: " << payload << endl;
+            break;
+        case BUSWRITE:
+            cout << "Controller: " << getAddress() << " Code: BUSWRITE               Payload: " << payload << endl;
+            break;
+        case DATA_RETURN_MEMORY:
+            cout << "Controller: " << getAddress() << " Code: DATA_RETURN_MEMORY     Payload: " << payload << endl;
+            break;
+        case DATA_RETURN_PROCESSOR:
+            cout << "Controller: " << getAddress() << " Code: DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
+            break;
+        case INVALIDATE:
+            cout << "Controller: " << getAddress() << " Code: INVALIDATE             Payload: " << payload << endl;
+            break;
+    }
     if ((nextToIssue->commandCode == BUSREAD) || nextToIssue->commandCode == BUSREADX) {
         dispatchedBusRead = nextToIssue;
         awaitingBusRead = true;
     }
-}
-
-BusRequest* CacheController::initiateBusTransaction(void) {
-    pendingBusReqFlag = false;
     return nextToIssue;
 }
 
@@ -89,10 +99,6 @@ void CacheController::handleMemoryAccess(Instruction* i) {
 void CacheController::Tick(void) {
     // Transitions to the new state and calls the actions function
     transitionState();
-    // Attempts to issue 
-    if (!requestsTransaction()) {
-        issueNextBusRequest();
-    }
 }
 
 void CacheController::cancelBusRequest(unsigned int commandCode, unsigned int payload) {
@@ -101,12 +107,6 @@ void CacheController::cancelBusRequest(unsigned int commandCode, unsigned int pa
         if ((r->commandCode == commandCode) && (r->payload == payload)) {
             busReqQueue->erase(it);
             return;
-        }
-    }
-    if (pendingBusReqFlag && nextToIssue != NULL) {
-        if ((nextToIssue->commandCode == commandCode) && (nextToIssue->payload == payload)) {
-            pendingBusReqFlag = false;
-            awaitingBusRead = false;
         }
     }
 }

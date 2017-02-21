@@ -3,18 +3,19 @@
 using namespace std;
 
 void System::Tick(void) {
+    cout << " ************************ TICK ************************" << endl;
     for (int i = processors->size() - 1; i >=0 ; i--) {
         Processor* p = processors->at(i);
-        cout << "Processor " << i << "->Tick()...";
+        //cout << "Processor " << i << "->Tick()...";
         p->Tick();
-        cout << "Complete" << endl;
+        //cout << "Complete" << endl;
     }
-    cout << "Memory->Tick()...";
+    //cout << "Memory->Tick()...";
     memory->Tick();
-    cout << "Complete" << endl;
-    cout << "Interconnect->Tick()...";
+    //cout << "Complete" << endl;
+    //cout << "Interconnect->Tick()...";
     interconnect->Tick();
-    cout << "Complete" << endl;
+    //cout << "Complete" << endl;
 }
 
 void System::insertInstruction(Instruction* i, unsigned int processorNum) {

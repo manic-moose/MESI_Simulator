@@ -9,7 +9,6 @@ void Memory::acceptBusTransaction(BusRequest* d) {
         o->age = 0;
         o->returnAddress = d->sourceAddress;
         memTracker->push_back(o);
-        cout << " Pused new mem tracker" << endl;
     } // Writes can be ignored - nothing to actually do.
     
     // Still may want to handle cancelling memory operations
@@ -19,6 +18,7 @@ void Memory::acceptBusTransaction(BusRequest* d) {
 
 BusRequest* Memory::initiateBusTransaction(void) {
     BusRequest* nextRequest = busReqQueue->front();
+    cout << "MEMORY Code: DATA_RETURN_MEMORY  Payload: " << nextRequest->payload << endl;
     busReqQueue->pop();
     memSendCounts++;
     return nextRequest;

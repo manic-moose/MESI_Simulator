@@ -2,7 +2,7 @@
 
 void Processor::Tick(void) {
     // Propagate clock to the cache controller
-    reportState();
+    //reportState();
     cacheController->Tick();
     transitionState();
 }

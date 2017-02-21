@@ -63,12 +63,10 @@ protected:
     vector<BusRequest*>* busReqQueue;  // Queue of bus communications to transmit
     
     BusRequest* nextToIssue;          // Holds the very next bus communication
-    bool pendingBusReqFlag;           // For the BusNode interface - indicates this controller wants to send a request (nextToIssue)
     bool awaitingBusRead;             // Indicates that a bus read was issued, and data has not returned
     BusRequest* dispatchedBusRead;    // A copy of the bus read sent out so that the response can be recognized on return
     
     bool hasQueuedBusRequest(void);  // Indicates there are BusRequests waiting in the bus request queue for issue to the bus
-    void issueNextBusRequest(void);   // Sets the pendingBusReqFlag and pulls the next BusReq off of nextToIssue
     
     // Checks the bus request queue for any BusRequests that have the given properties
     bool hasBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload);
