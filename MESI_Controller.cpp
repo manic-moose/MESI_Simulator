@@ -233,7 +233,7 @@ void MESI_Controller::UpdateCacheLoad_Action(void) {
     // that at least one other cache contains
     // a copy of the shared data.
     unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
-    if (sawBusReadXToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
+    if (sawBusReadToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
         // While waiting for data, observed a bus request for the same address.
         // Rather than updating the cache, the data would just be forwarded to the
         // processor.
