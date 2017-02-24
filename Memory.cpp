@@ -9,13 +9,13 @@ void Memory::acceptBusTransaction(BusRequest* d) {
         o->age = 0;
         o->returnAddress = d->sourceAddress;
         memTracker->push_back(o);
-    } else if (d->commandCode == DATA_RETURN_PROCESSOR) {
+    } else if (d->commandCode == DATA_RETURN_PROCESSOR || d->commandCode == BUSWRITE) {
         // Need to cancel a currently pending memory op for this
-        unsigned int targetAddress = d->targetAddress;
         unsigned int payloadValue = d->payload;
         for (unsigned int i = 0; i < memTracker->size(); i++) {
             MemoryOperation* p = memTracker->at(i);
-            if ((p->returnAddress == targetAddress) && (p->address == payloadValue)) {
+            if (p->address == payloadValue) {
+                cout << "MEMORY Code: CANCEL_MEM_RETURN  Payload: " << payloadValue << endl;
                 memTracker->erase(memTracker->begin() + i);
                 return;
             }
