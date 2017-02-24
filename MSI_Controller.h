@@ -1,5 +1,5 @@
-#ifndef MSI_CONTROLLER_H
-#define MSI_CONTROLLER_H
+#ifndef MESI_CONTROLLER_H
+#define MESI_CONTROLLER_H
 
 #include "CacheController.h"
 
@@ -10,7 +10,7 @@
 
 using namespace std;
 
-class MSI_Controller : public CacheController {
+class MESI_Controller : public CacheController {
   
 private:
     
@@ -19,14 +19,22 @@ private:
     
     // These flags indicate that data was returned from
     // a bus read/readx operation (either from memory
-    // or a processor, which impacts how MSI
+    // or a processor, which impacts how MESI
     // bits are updated)
-    bool data_BusRead_Memory;     // Normal Return from memory
-    bool data_BusRead_Processor;  // Normal cache-to-cache transfer
-    bool snoopedData_Writeback;      // Snooped data from cache writeback
+    bool gotDataReturnFromBusRead_Memory;     // Normal Return from memory
+    bool gotDataReturnFromBusRead_Processor;  // Normal cache-to-cache transfer
+    bool snoopedDataReturnFromWriteback;      // Snooped data from cache writeback
+    
+    // Flags to handle cases where bus operations occurred while waiting for a memory return
+    bool sawBusReadToMyIncomingAddress;
+    bool sawBusReadXToMyIncomingAddress;
+    bool sawInvalidateToMyIncomingAddress;
+    
     // Just an indicator that the current required bus read was already queued
     // so that in the BUSREAD/BUSREADX states, multiple reads are not issued
-    bool queued_BusRead;
+    bool queuedBusRead;
+    bool awaitingDataLocal;
+    unsigned int awaitingDataLocal_Address;
     
     typedef enum E_STATES {
         IDLE_STATE,
@@ -36,6 +44,7 @@ private:
         CHECK_CACHE_ST_STATE,
         ISSUE_READX_STATE,
         ISSUE_INVALIDATE_STATE,
+        INVALIDATE_WAIT,
         UPDATE_CACHE_ST_STATE
     } STATES;
     
@@ -44,6 +53,7 @@ private:
     STATES getNextState(void);
     void callActionFunction(void);
     void transitionState(void);
+    void reportState(void);
     
     //Define state transition functions
     STATES Idle_Transition(void);
@@ -53,6 +63,7 @@ private:
     STATES CheckCacheStore_Transition(void);
     STATES IssueReadX_Transition(void);
     STATES IssueInvalidate_Transition(void);
+    STATES InvalidateWait_Transition(void);
     STATES UpdateCacheStore_Transition(void);
     
     //Define state action functions
@@ -63,19 +74,37 @@ private:
     void CheckCacheStore_Action(void);
     void IssueReadX_Action(void);
     void IssueInvalidate_Action(void);
+    void InvalidateWait_Action(void);
     void UpdateCacheStore_Action(void);
     
     // Broadcast a bus request with given command code and payload
     void queueBusCommand(unsigned int command, unsigned int payload);
-   
+    // Broadcast a bus request with given command code and payload
+    void queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx);
+    
+    // Methods to handle incoming communications
+    void handleBusRead(BusRequest* d);
+    void handleBusReadX(BusRequest* d);
+    void handleBusWrite(BusRequest* d);
+    void handleDataReturnMemory(BusRequest* d);
+    void handleDataReturnProcessor(BusRequest* d);
+    void handleInvalidate(BusRequest* d);
+    
+    // Returns true if a bus read request was issued
+    // to the given address.
+    bool awaitingDataRemote(unsigned int address);
     
 public:
     
-    MSI_Controller() : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {
-        data_BusRead_Memory    = false;
-        data_BusRead_Processor = false;
-        queued_BusRead         = false;
-        snoopedData_Writeback  = false;
+    MESI_Controller() : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {
+        gotDataReturnFromBusRead_Memory    = false;
+        gotDataReturnFromBusRead_Processor = false;
+        queuedBusRead                      = false;
+        snoopedDataReturnFromWriteback     = false;
+        sawBusReadToMyIncomingAddress      = false;
+        sawBusReadXToMyIncomingAddress     = false;
+        sawInvalidateToMyIncomingAddress   = false;
+        awaitingDataLocal                  = false;
     }
     
     // BusNode receiver function
@@ -83,4 +112,5 @@ public:
     
 };
 
-#endif //MSI_CONTROLLER_H
+
+#endif //MESI_CONTROLLER_H

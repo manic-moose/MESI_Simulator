@@ -1,6 +1,6 @@
-#include "MSI_Controller.h"
+#include "MESI_Controller.h"
 
-MSI_Controller::STATES MSI_Controller::getNextState(void) {
+MESI_Controller::STATES MESI_Controller::getNextState(void) {
     switch(currentState) {
         case IDLE_STATE:
             return Idle_Transition();
@@ -22,7 +22,36 @@ MSI_Controller::STATES MSI_Controller::getNextState(void) {
     return IDLE_STATE;
 }
 
-void MSI_Controller::callActionFunction(void) {
+void MESI_Controller::reportState(void) {
+    switch(currentState) {
+        case IDLE_STATE:
+            cout << "MESI_Controller Idle State...";
+            break;
+        case CHECK_CACHE_LD_STATE:
+            cout << "MESI_Controller CheckCacheLd State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            break;
+        case ISSUE_READ_STATE:
+            cout << "MESI_Controller Read State  Instruction Address: " << cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            break;
+        case UPDATE_CACHE_LD_STATE:
+            cout << "MESI_Controller UpdateCacheLd State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            break;
+        case CHECK_CACHE_ST_STATE:
+            cout << "MESI_Controller CheckCacheSt State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            break;
+        case ISSUE_READX_STATE:
+            cout << "MESI_Controller Readx State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            break;
+        case ISSUE_INVALIDATE_STATE:
+            cout << "MESI_Controller Invalidate State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            break;
+        case UPDATE_CACHE_ST_STATE:
+            cout << "MESI_Controller UpdateCacheSt State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            break;
+    }
+}
+
+void MESI_Controller::callActionFunction(void) {
     switch(currentState) {
         case IDLE_STATE:
             Idle_Action();
@@ -51,14 +80,19 @@ void MSI_Controller::callActionFunction(void) {
     }
 }
 
-void MSI_Controller::transitionState(void) {
+void MESI_Controller::transitionState(void) {
+    //cout << getAddress() << " Transition  ";
+    //reportState();
     STATES nextState = getNextState();
     currentState = nextState;
+    cout << getAddress() << " ";
+    reportState();
+    cout << endl;
     callActionFunction();
 }
 
 //Define state transition functions
-MSI_Controller::STATES MSI_Controller::Idle_Transition(void) {
+MESI_Controller::STATES MESI_Controller::Idle_Transition(void) {
     if (hasPendingInstruction()) {
         unsigned int opcode = currentInstruction->OPCODE;
         if (opcode == LOAD_CMD) {
@@ -73,10 +107,12 @@ MSI_Controller::STATES MSI_Controller::Idle_Transition(void) {
     }
 }
 
-MSI_Controller::STATES MSI_Controller::CheckCacheLoad_Transition(void) {
+MESI_Controller::STATES MESI_Controller::CheckCacheLoad_Transition(void) {
     unsigned int address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
-        // Cache Hit - Line must be in one of M, or S
+        // Cache Hit - Line must be in one of M, E, or S. Since
+        // this is only a load, the cache line state does not
+        // need to be updated except for LRU.
         return UPDATE_CACHE_LD_STATE;
     } else {
         // Cache Miss - a Bus read will need to be issued.
@@ -84,56 +120,37 @@ MSI_Controller::STATES MSI_Controller::CheckCacheLoad_Transition(void) {
     }
 }
 
-MSI_Controller::STATES MSI_Controller::IssueRead_Transition(void) {
-    if (data_BusRead_Memory || data_BusRead_Processor) {
-        // Data was returned from the bus
-        return UPDATE_CACHE_LD_STATE;
-    } else {
-        // Still waiting on data to return from the bus read
+MESI_Controller::STATES MESI_Controller::IssueRead_Transition(void) {
+    if (awaitingBusRead || awaitingDataLocal) {
         return ISSUE_READ_STATE;   
-    }
-}
-
-MSI_Controller::STATES MSI_Controller::UpdateCacheLoad_Transition(void) {
-    // No changes just cache gets updated
-    return IDLE_STATE;
-}
-
-MSI_Controller::STATES MSI_Controller::IssueReadX_Transition(void) {
-    if (data_BusRead_Memory || data_BusRead_Processor) {
-        // Data was returned from the bus
-        return UPDATE_CACHE_ST_STATE;
     } else {
-        // Still waiting on data to return from the bus read
-        return ISSUE_READX_STATE;   
+        return UPDATE_CACHE_LD_STATE;
     }
 }
 
-MSI_Controller::STATES MSI_Controller::IssueInvalidate_Transition(void) {
-    // Message is sent to invalidate other copies
-    return UPDATE_CACHE_ST_STATE;
-}
-
-MSI_Controller::STATES MSI_Controller::UpdateCacheStore_Transition(void) {
+MESI_Controller::STATES MESI_Controller::UpdateCacheLoad_Transition(void) {
+    // No branches here
     return IDLE_STATE;
 }
 
-MSI_Controller::STATES MSI_Controller::CheckCacheStore_Transition(void) {
+MESI_Controller::STATES MESI_Controller::CheckCacheStore_Transition(void) {
     unsigned int address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
-        // This item is in the cache - need to check MSI bits to determine next state.
+        // This item is in the cache - need to check MESI bits to determine
+        // next state.
         
         // Assertion - this should never be true here, and if
         // it is, there is a bug.
         assert(!cache->isInvalid(address));
         
+        bool isExclusive = cache->isExclusive(address);
         bool isModified = cache->isModified(address);
         bool isShared   = cache->isShared(address);
         
-        // Assert that one of the other two states are true
-        assert(isModified || isShared);
+        // Assert that one of the other three states are true
+        assert(isExclusive || isModified || isShared);
         
-        if (isModified) {
+        if (isModified || isExclusive) {
             // We have the only copy, so we can freely update
             // the cache and transition to MODIFIED
             return UPDATE_CACHE_ST_STATE;
@@ -148,39 +165,79 @@ MSI_Controller::STATES MSI_Controller::CheckCacheStore_Transition(void) {
     }
 }
 
-//Define state action functions
-void MSI_Controller::Idle_Action(void) {
-    // Reset boolean flags
-    data_BusRead_Memory    = false;
-    data_BusRead_Processor = false;
-    snoopedData_Writeback  = false;
-    queued_BusRead         = false;
-    awaitingBusRead        = false;
-    pendingInstructionFlag = false;
-}
-
-void MSI_Controller::CheckCacheLoad_Action(void) {
-    // Nothing occurs in this state except cache checks,
-    // which only determine state transition (see
-    // CheckCacheLoad_Transition())
-}
-
-void MSI_Controller::IssueRead_Action(void) {
-    if (!queued_BusRead) {
-        // If we have done so yet in this state, queue the bus read,
-        // otherwise, we just wait in the state without performing any action
-        unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
-        queueBusCommand(BUSREAD, address);
-        queued_BusRead = true;
+MESI_Controller::STATES MESI_Controller::IssueReadX_Transition(void) {
+    if (awaitingBusRead || awaitingDataLocal) {
+        return ISSUE_READX_STATE;
+    } else {
+        return UPDATE_CACHE_ST_STATE;
     }
 }
 
-void MSI_Controller::UpdateCacheLoad_Action(void) {
-    // When updating the cache for a load command, it will be transitioned to S.  
+MESI_Controller::STATES MESI_Controller::IssueInvalidate_Transition(void) {
+    // Message is sent to invalidate other copies
+    return INVALIDATE_WAIT;
+}
+
+MESI_Controller::STATES MESI_Controller::InvalidateWait_Transition(void) {
+    if (outgoingCommandWaitFlag) {
+        return INVALIDATE_WAIT;
+    } else {
+        return UPDATE_CACHE_ST_STATE;
+    }
+}
+
+MESI_Controller::STATES MESI_Controller::UpdateCacheStore_Transition(void) {
+    return IDLE_STATE;
+}
+
+//Define state action functions
+void MESI_Controller::Idle_Action(void) {
+    // Reset boolean flags
+    gotDataReturnFromBusRead_Memory    = false;
+    gotDataReturnFromBusRead_Processor = false;
+    snoopedDataReturnFromWriteback     = false;
+    awaitingBusRead                    = false;
+    pendingInstructionFlag             = false;
+    queuedBusRead                      = false;
+    sawBusReadToMyIncomingAddress      = false;
+    sawBusReadXToMyIncomingAddress     = false;
+    sawInvalidateToMyIncomingAddress   = false;
+}
+
+void MESI_Controller::CheckCacheLoad_Action(void) {
+    transitionState();
+}
+
+void MESI_Controller::IssueRead_Action(void) {
+    if (!queuedBusRead) {
+        // If we have done so yet in this state, queue the bus read,
+        // otherwise, we just wait in the state without performing any
+        // action
+        unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+        queueBusCommand(BUSREAD, address);
+        queuedBusRead = true;
+        awaitingDataLocal = true;
+        awaitingDataLocal_Address = address;
+    }
+}
+
+void MESI_Controller::UpdateCacheLoad_Action(void) {
+    // When updating the cache for a load command, it will
+    // either be transitioned to E or S, depending on 
+    // the state of other caches. If the data comes
+    // from a cache-to-cache transfer, then we know
+    // that at least one other cache contains
+    // a copy of the shared data.
     unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    if (sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
+        // While waiting for data, observed a bus request for the same address.
+        // Rather than updating the cache, the data would just be forwarded to the
+        // processor.
+        return;   
+    }
     if (!cache->contains(address)) {
         // We didn't already have the data, so it must have come from the bus
-        assert(data_BusRead_Memory || data_BusRead_Processor || snoopedData_Writeback);
+        assert(gotDataReturnFromBusRead_Memory || gotDataReturnFromBusRead_Processor || snoopedDataReturnFromWriteback);
         // First check that the cache has an empty space, and if not, we need to evict a line
         // and potentially write it back out.
         if (cache->isFull(address)) {
@@ -190,41 +247,70 @@ void MSI_Controller::UpdateCacheLoad_Action(void) {
                 unsigned int setNumber      = evictedLine->getSetNumber();
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                cout << "0  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                 queueBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
         cache->insertLine(address);
+        if (sawBusReadToMyIncomingAddress) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
+            cache->setShared(address);
+        } else if (gotDataReturnFromBusRead_Memory) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
+            // This is the modification to make from MESI to MSI, in MESI, this would get updated
+            // to exclusive, but we just set it to shared here 
+            cache->setShared(address);
+        } else if (gotDataReturnFromBusRead_Processor) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
+            cache->setShared(address);
+        } else {
+            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
             //snoopedDataReturnFromWriteback
-        cache->setShared(address);
+            cache->setShared(address);
+        }
     }
     cache->updateLRU(address);
 }
 
-void MSI_Controller::CheckCacheStore_Action(void) {
+void MESI_Controller::CheckCacheStore_Action(void) {
     // Nothing occurs in this state except cache checks,
     // which only determine state transition (see
     // CheckCacheStore_Transition())
+    transitionState();
 }
 
-void MSI_Controller::IssueReadX_Action(void) {
+void MESI_Controller::IssueReadX_Action(void) {
     if (!queuedBusRead) {
         // If we have done so yet in this state, queue the bus read,
         // otherwise, we just wait in the state without performing any action
         unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
         queueBusCommand(BUSREADX, address);
-        queued_BusRead = true;
+        queuedBusRead = true;
+        awaitingDataLocal = true;
+        awaitingDataLocal_Address = address;
     }
 }
 
-void MSI_Controller::IssueInvalidate_Action(void) {
+void MESI_Controller::IssueInvalidate_Action(void) {
     unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     queueBusCommand(INVALIDATE,address);
+    outgoingCommandWaitFlag = true;
+    outgoingCommandWaitCode = INVALIDATE;
 }
 
-void MSI_Controller::UpdateCacheStore_Action(void) {
+void MESI_Controller::InvalidateWait_Action(void) {
+    
+}
+
+void MESI_Controller::UpdateCacheStore_Action(void) {
     // In this state, the cache line is being updated
     // to MODIFIED.
     unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    if (sawBusReadToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
+        // Saw an operation to this address while waiting for data to return. Instead of updating the cache,
+        // a write request is issued to memory immediately. No actionst to take here
+        return;
+    }
     if (!cache->contains(address)) {
         // First check that the cache has an empty space, and if not, we need to evict a line
         // and potentially write it back out.
@@ -235,169 +321,180 @@ void MSI_Controller::UpdateCacheStore_Action(void) {
                 unsigned int setNumber      = evictedLine->getSetNumber();
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                cout << "X  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                 queueBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
+        cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
         cache->insertLine(address);   
+        cache->setModified(address);
+    } else {
+        if (!cache->isModified(address)) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
+        }
     }
-    cache->setModified(address);
     cache->updateLRU(address);
 }
 
-void MSI_Controller::acceptBusTransaction(BusRequest* d) {
-    unsigned int cmd     = d->commandCode;
-    unsigned int address = d->payload;
-    if (awaitingBusRead) {
-        assert(dispatchedBusRead != NULL);
-        unsigned int dispatchedAddress = dispatchedBusRead->payload;
-        unsigned int dispatchedCmd     = dispatchedBusRead->commandCode;
-        switch(cmd) {
-            case BUSREAD:
-                // See notes below. Main difference is if the BUSREAD
-                // is to the same address that this controller is currently
-                // waiting for data for, then additional actions may be required
-                if (cache->contains(address)) {
-                    if (cache->isShared(address)) {
-                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
-                    } else if (cache->isModified(address)) {
-                        queueBusCommand(BUSWRITE, address);
-                    }
-                    cache->setShared(address);
-                }
-                if (dispatchedAddress == address) {
-                    
-                }
-                break;
-            case BUSREADX:
-                // See notes below. Main difference is if the BUSREADX
-                // is to the same address that this controller is currently
-                // waiting for data for, then additional actions may be required
-                if (cache->contains(address)) {
-                    if (cache->isShared(address)) {
-                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
-                    } else if (cache->isModified(address)) {
-                        queueBusCommand(BUSWRITE, address);
-                    }
-                    cache->setInvalid(address);
-                }
-                if (dispatchedAddress == address) {
-                    
-                }
-                break;
-            case BUSWRITE:
-                // if this is a BUSWRITE to the address we are waiting for, then we can snoop the data.
-                if (dispatchedAddress == address) {
-                    snoopedData_Writeback = true;
-                    awaitingBusRead                = false;
-                }
-                break;
-            case DATA_RETURN_MEMORY:
-                // Check if the address for the data return is the address we are waiting
-                // for or not. Set appropriate flags if it is. Also see notes below.
-                if (dispatchedAddress == address) {
-                    data_BusRead_Memory = true;
-                    awaitingBusRead     = false;
-                }
-                break;
-            case DATA_RETURN_PROCESSOR:
-                // Check if the address for the data return is the address we are waiting
-                // for or not. Set appropriate flags if it is
-                if (dispatchedAddress == address) {
-                    data_BusRead_Processor = true;
-                    awaitingBusRead        = false;
-                }
-                cancelBusRequest(DATA_RETURN_PROCESSOR,address);
-                break;
-            case INVALIDATE:
-                // See notes below. Main difference is if the INVALIDATE
-                // is to the same address that this controller is currently
-                // waiting for data for, then additional actions may be required
-                if (cache->contains(address)) {
-                    assert(!cache->isModified(address));
-                    cache->setInvalid(address);
-                }
-                if (dispatchedAddress == address) {
-                    
-                }
-                break;
-        }
-    } else {
-        switch(cmd) {
-            case BUSREAD:
-                // We have to check if we have this in the cache, and if
-                // we do, update the cache line state to shared. We also
-                // need to issue a DATA_RETURN_PROCESSOR or BUSWRITE with the data
-                // to perform a cache to cache transfer. If there are other
-                // processors on the bus, and the cache line is shared, they may also issue
-                // this command. Therefore, after queueing the DATA_RETURN_PROCESSOR, if it
-                // one of these is observed on the bus to the same address, that
-                // means another processor beat this one, and we should cancel
-                // the bus request. After the DATA_RETURN_PROCESSOR or BUSWRITE is issued,
-                // the cache line should be updated to the shared state.
-                if (cache->contains(address)) {
-                    if (cache->isShared(address)) {
-                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
-                    } else if (cache->isModified(address)) {
-                        queueBusCommand(BUSWRITE, address);
-                    }
-                    cache->setShared(address);
-                }
-                break;
-            case BUSREADX:
-                // If we have this item in the cache, then it must be invalidated.
-                // If we currently have a modified copy of it, we must issue a BUSWRITE.
-                // If we have a copy of the line, but it is not modified, we will issue a
-                // DATA_RETURN_PROCESSOR to perform a cache to cache transfer.
-                // After any required issues are complete, the line must be transitioned.
-                // to invalid.
-                if (cache->contains(address)) {
-                    if (cache->isShared(address)) {
-                        queueBusCommand(DATA_RETURN_PROCESSOR, address);
-                    } else if (cache->isModified(address)) {
-                        queueBusCommand(BUSWRITE, address);
-                    }
-                    cache->setInvalid(address);
-                }
-                break;
-            case BUSWRITE:
-                // BUSWRITES are only issued when a modified line is being written back
-                // to memory. Since we aren't currently waiting for any data and just observed
-                // a BUSWRITE, it is safe to assume that this cache does not contain the line
-                // and can ignore this. assert that this data is not present in our cache
-                // just to help catch bugs
-                assert(!cache->contains(address));
-                break;
-            case DATA_RETURN_MEMORY:
-                // We aren't waiting for data, so ignore this
-                break;
-            case DATA_RETURN_PROCESSOR:
-                // If we've previously queued a DATA_RETURN_PROCESSOR to the same
-                // address, we should cancel this request since it was serviced by
-                // another cache controller
-                cancelBusRequest(DATA_RETURN_PROCESSOR,address);
-                break;
-            case INVALIDATE:
-                // If we have this line in the cache, we must invalidate it.
-                // If the line is modified, it would need to be streamed out.
-                // Given our protocol, this should not be possible though,
-                // since INVALIDATE only ever is issued when a STORE is performed
-                // to an address that is in the SHARED state (which by definition
-                // means no modified copies exist). Assert that our line
-                // is not modified and invalidate the copy if it exists.
-                if (cache->contains(address)) {
-                    assert(!cache->isModified(address));
-                    cache->setInvalid(address);
-                }
-                break;
-        }
+void MESI_Controller::acceptBusTransaction(BusRequest* d) {
+    switch(d->commandCode) {
+        case BUSREAD:
+            handleBusRead(d);
+            break;
+        case BUSREADX:
+            handleBusReadX(d);
+            break;
+        case BUSWRITE:
+            handleBusWrite(d);
+            break;
+        case DATA_RETURN_MEMORY:
+            handleDataReturnMemory(d);
+            break;
+        case DATA_RETURN_PROCESSOR:
+            handleDataReturnProcessor(d);
+            break;
+        case INVALIDATE:
+            handleInvalidate(d);
+            break;
     }
 }
 
-void MSI_Controller::queueBusCommand(unsigned int command, unsigned int payload) {
+void MESI_Controller::handleBusRead(BusRequest* d) {
+    // We have to check if we have this in the cache, and if
+    // we do, update the cache line state to shared. We also
+    // need to issue a DATA_RETURN_PROCESSOR or BUSWRITE with the data
+    // to perform a cache to cache transfer. If there are other
+    // processors on the bus, and the cache line is shared, they may also issue
+    // this command. Therefore, after queueing the DATA_RETURN_PROCESSOR, if it
+    // one of these is observed on the bus to the same address, that
+    // means another processor beat this one, and we should cancel
+    // the bus request. After the DATA_RETURN_PROCESSOR or BUSWRITE is issued,
+    // the cache line should be updated to the shared state.
+    unsigned int address = d->payload;
+    if (cache->contains(address)) {
+        if (cache->isExclusive(address) || cache->isShared(address)) {
+            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
+            cout << "1 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
+        } else if (cache->isModified(address)) {
+            cout << "4  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
+            queueBusCommand(BUSWRITE, address);
+        }
+        if (!cache->isShared(address)) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED  Payload: " << address << endl;
+        }
+        cache->setShared(address);
+    } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
+        // We've queued up a read command to that address...
+        sawBusReadToMyIncomingAddress = true;
+    }
+}
+
+void MESI_Controller::handleBusReadX(BusRequest* d) {
+    // If we have this item in the cache, then it must be invalidated.
+    // If we currently have a modified copy of it, we must issue a BUSWRITE.
+    // If we have a copy of the line, but it is not modified, we will issue a
+    // DATA_RETURN_PROCESSOR to perform a cache to cache transfer.
+    // After any required issues are complete, the line must be transitioned.
+    // to invalid.
+    unsigned int address = d->payload;
+    if (cache->contains(address)) {
+        if (cache->isExclusive(address) || cache->isShared(address)) {
+            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
+            cout << "2 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
+        } else if (cache->isModified(address)) {
+            cout << "5  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
+            queueBusCommand(BUSWRITE, address);
+        }
+        cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
+        cache->invalidate(address);
+        assert(!cache->contains(address));
+    } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
+        // We've queued up a read command to that address...
+        cout << getAddress() << "Saw it here with address " << address << endl;
+        sawBusReadXToMyIncomingAddress = true;
+    }
+}
+
+void MESI_Controller::handleBusWrite(BusRequest* d) {
+    // BUSWRITES are only issued when a modified line is being written back
+    // to memory. Since we aren't currently waiting for any data and just observed
+    // a BUSWRITE, it is safe to assume that this cache does not contain the line
+    // and can ignore this. assert that this data is not present in our cache
+    // just to help catch bugs
+    unsigned int address = d->payload;
+    if (awaitingDataRemote(address)) {
+        snoopedDataReturnFromWriteback = true;
+        awaitingBusRead                = false;
+        awaitingDataLocal              = false;
+    }
+    if (cache->contains(address)) {
+        cout << "Detected failure in controller: " << getAddress() << " Write to address " << address << " that I own" << endl;   
+    }
+    assert(!cache->contains(address));
+}
+
+void MESI_Controller::handleDataReturnMemory(BusRequest* d) {
+    unsigned int address = d->payload;
+    if (awaitingDataRemote(address)) {
+        gotDataReturnFromBusRead_Memory = true;
+        awaitingBusRead                 = false;
+        awaitingDataLocal               = false;
+    }
+}
+
+void MESI_Controller::handleDataReturnProcessor(BusRequest* d) {
+    // If we've previously queued a DATA_RETURN_PROCESSOR to the same
+    // address, we should cancel this request since it was serviced by
+    // another cache controller
+    unsigned int address = d->payload;
+    if (awaitingDataRemote(address)) {
+        gotDataReturnFromBusRead_Processor = true;
+        awaitingBusRead                    = false;
+        awaitingDataLocal                  = false;
+    }
+    cancelBusRequest(DATA_RETURN_PROCESSOR,address);
+}
+
+void MESI_Controller::handleInvalidate(BusRequest* d) {
+    // If we have this line in the cache, we must invalidate it.
+    // If the line is modified, it would need to be streamed out.
+    // Given our protocol, this should not be possible though,
+    // since INVALIDATE only ever is issued when a STORE is performed
+    // to an address that is in the SHARED state (which by definition
+    // means no modified copies exist). Assert that our line
+    // is not modified and invalidate the copy if it exists.
+    unsigned int address = d->payload;
+    if (cache->contains(address)) {
+        if (cache->isModified(address)) {
+            queueBusCommand(BUSWRITE, address);   
+        }
+        cout << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_1  Payload: " << address << endl;
+        cache->invalidate(address);
+    } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
+        // We've queued up a read command to that address...
+        sawInvalidateToMyIncomingAddress = true;
+    }
+}
+
+void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
-    r->payload       = payload;
+    r->payload       = cache->getLineAlignedAddress(payload);
     r->targetAddress = BROADCAST_ADX;
     r->sourceAddress = getAddress();
     addNewBusRequest(r);
+}
+
+void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+    BusRequest* r    = new BusRequest;
+    r->commandCode   = command;
+    r->payload       = cache->getLineAlignedAddress(payload);
+    r->targetAddress = targetAdx;
+    r->sourceAddress = getAddress();
+    addNewBusRequest(r);
+}
+
+bool MESI_Controller::awaitingDataRemote(unsigned int address) {
+    assert(dispatchedBusRead != NULL);
+    return (((cache->getLineAlignedAddress(currentInstruction->ADDRESS)) == address) && awaitingBusRead);
 }
