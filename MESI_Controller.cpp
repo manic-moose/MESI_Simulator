@@ -175,7 +175,15 @@ MESI_Controller::STATES MESI_Controller::IssueReadX_Transition(void) {
 
 MESI_Controller::STATES MESI_Controller::IssueInvalidate_Transition(void) {
     // Message is sent to invalidate other copies
-    return UPDATE_CACHE_ST_STATE;
+    return INVALIDATE_WAIT;
+}
+
+MESI_Controller::STATES MESI_Controller::InvalidateWait_Transition(void) {
+    if (outgoingCommandWaitFlag) {
+        return INVALIDATE_WAIT;
+    } else {
+        return UPDATE_CACHE_ST_STATE;
+    }
 }
 
 MESI_Controller::STATES MESI_Controller::UpdateCacheStore_Transition(void) {
@@ -197,9 +205,6 @@ void MESI_Controller::Idle_Action(void) {
 }
 
 void MESI_Controller::CheckCacheLoad_Action(void) {
-    // Nothing occurs in this state except cache checks,
-    // which only determine state transition (see
-    // CheckCacheLoad_Transition())
     transitionState();
 }
 
@@ -212,7 +217,6 @@ void MESI_Controller::IssueRead_Action(void) {
         queueBusCommand(BUSREAD, address);
         queuedBusRead = true;
         awaitingDataLocal = true;
-        awaitingBusRead = true;
         awaitingDataLocal_Address = address;
     }
 }
@@ -282,13 +286,18 @@ void MESI_Controller::IssueReadX_Action(void) {
         queuedBusRead = true;
         awaitingDataLocal = true;
         awaitingDataLocal_Address = address;
-        awaitingBusRead = true;
     }
 }
 
 void MESI_Controller::IssueInvalidate_Action(void) {
     unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     queueBusCommand(INVALIDATE,address);
+    outgoingCommandWaitFlag = true;
+    outgoingCommandWaitCode = INVALIDATE;
+}
+
+void MESI_Controller::InvalidateWait_Action(void) {
+    
 }
 
 void MESI_Controller::UpdateCacheStore_Action(void) {
@@ -320,7 +329,6 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
     } else {
         if (!cache->isModified(address)) {
             cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
-            cache->setModified(address);
         }
     }
     cache->updateLRU(address);
@@ -363,13 +371,13 @@ void MESI_Controller::handleBusRead(BusRequest* d) {
     unsigned int address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
-            queueBusCommand(DATA_RETURN_PROCESSOR, address, d->sourceAddress);
+            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
             cout << "1 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
         } else if (cache->isModified(address)) {
             cout << "4  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
             queueBusCommand(BUSWRITE, address);
         }
-        if (!cache->setShared(address)) {
+        if (!cache->isShared(address)) {
             cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED  Payload: " << address << endl;
         }
         cache->setShared(address);
@@ -389,7 +397,7 @@ void MESI_Controller::handleBusReadX(BusRequest* d) {
     unsigned int address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
-            queueBusCommand(DATA_RETURN_PROCESSOR, address, d->sourceAddress);
+            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
             cout << "2 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
         } else if (cache->isModified(address)) {
             cout << "5  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
@@ -455,7 +463,9 @@ void MESI_Controller::handleInvalidate(BusRequest* d) {
     // is not modified and invalidate the copy if it exists.
     unsigned int address = d->payload;
     if (cache->contains(address)) {
-        //assert(!cache->isModified(address));
+        if (cache->isModified(address)) {
+            queueBusCommand(BUSWRITE, address);   
+        }
         cout << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_1  Payload: " << address << endl;
         cache->invalidate(address);
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {

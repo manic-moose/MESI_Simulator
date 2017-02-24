@@ -70,6 +70,9 @@ BusRequest* CacheController::initiateBusTransaction(void) {
         dispatchedBusRead = nextToIssue;
         awaitingBusRead = true;
     }
+    if (nextToIssue->commandCode == outgoingCommandWaitCode) {
+        outgoingCommandWaitFlag = false;
+    }
     return nextToIssue;
 }
 
@@ -112,6 +115,7 @@ void CacheController::cancelBusRequest(unsigned int commandCode, unsigned int pa
     for (vector<BusRequest*>::iterator it = busReqQueue->begin(); it < busReqQueue->end(); it++) {
         BusRequest* r = (*it);
         if ((r->commandCode == commandCode) && (r->payload == payload)) {
+            cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_PROC  Payload: " << payload << endl;
             busReqQueue->erase(it);
             return;
         }

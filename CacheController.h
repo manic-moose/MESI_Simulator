@@ -21,6 +21,8 @@ public:
         pendingInstructionFlag = false;
         awaitingBusRead = 0;
         busReqQueue = new vector<BusRequest*>;
+        outgoingCommandWaitFlag = false;
+        outgoingCommandWaitCode = 0;
     }
     
     // Function to handle LOAD or STORE commands from the processor
@@ -50,6 +52,9 @@ protected:
     // The cache the controller interfaces to
     Cache* cache;
     // Cache controlling methods
+    
+    bool outgoingCommandWaitFlag;
+    unsigned int outgoingCommandWaitCode;
     
     // This will invalidate a line in the cache that maps
     // to memoryAdx. If the line is dirty, it will also
