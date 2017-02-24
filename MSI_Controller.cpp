@@ -1,6 +1,6 @@
-#include "MESI_Controller.h"
+#include "MSI_Controller.h"
 
-MESI_Controller::STATES MESI_Controller::getNextState(void) {
+MSI_Controller::STATES MSI_Controller::getNextState(void) {
     switch(currentState) {
         case IDLE_STATE:
             return Idle_Transition();
@@ -22,36 +22,36 @@ MESI_Controller::STATES MESI_Controller::getNextState(void) {
     return IDLE_STATE;
 }
 
-void MESI_Controller::reportState(void) {
+void MSI_Controller::reportState(void) {
     switch(currentState) {
         case IDLE_STATE:
-            cout << "MESI_Controller Idle State...";
+            cout << "MSI_Controller Idle State...";
             break;
         case CHECK_CACHE_LD_STATE:
-            cout << "MESI_Controller CheckCacheLd State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            cout << "MSI_Controller CheckCacheLd State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
             break;
         case ISSUE_READ_STATE:
-            cout << "MESI_Controller Read State  Instruction Address: " << cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            cout << "MSI_Controller Read State  Instruction Address: " << cache->getLineAlignedAddress(currentInstruction->ADDRESS);
             break;
         case UPDATE_CACHE_LD_STATE:
-            cout << "MESI_Controller UpdateCacheLd State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            cout << "MSI_Controller UpdateCacheLd State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
             break;
         case CHECK_CACHE_ST_STATE:
-            cout << "MESI_Controller CheckCacheSt State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            cout << "MSI_Controller CheckCacheSt State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
             break;
         case ISSUE_READX_STATE:
-            cout << "MESI_Controller Readx State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            cout << "MSI_Controller Readx State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
             break;
         case ISSUE_INVALIDATE_STATE:
-            cout << "MESI_Controller Invalidate State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            cout << "MSI_Controller Invalidate State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
             break;
         case UPDATE_CACHE_ST_STATE:
-            cout << "MESI_Controller UpdateCacheSt State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+            cout << "MSI_Controller UpdateCacheSt State  Instruction Address: "<< cache->getLineAlignedAddress(currentInstruction->ADDRESS);
             break;
     }
 }
 
-void MESI_Controller::callActionFunction(void) {
+void MSI_Controller::callActionFunction(void) {
     switch(currentState) {
         case IDLE_STATE:
             Idle_Action();
@@ -80,7 +80,7 @@ void MESI_Controller::callActionFunction(void) {
     }
 }
 
-void MESI_Controller::transitionState(void) {
+void MSI_Controller::transitionState(void) {
     //cout << getAddress() << " Transition  ";
     //reportState();
     STATES nextState = getNextState();
@@ -92,7 +92,7 @@ void MESI_Controller::transitionState(void) {
 }
 
 //Define state transition functions
-MESI_Controller::STATES MESI_Controller::Idle_Transition(void) {
+MSI_Controller::STATES MSI_Controller::Idle_Transition(void) {
     if (hasPendingInstruction()) {
         unsigned int opcode = currentInstruction->OPCODE;
         if (opcode == LOAD_CMD) {
@@ -107,7 +107,7 @@ MESI_Controller::STATES MESI_Controller::Idle_Transition(void) {
     }
 }
 
-MESI_Controller::STATES MESI_Controller::CheckCacheLoad_Transition(void) {
+MSI_Controller::STATES MSI_Controller::CheckCacheLoad_Transition(void) {
     unsigned int address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
         // Cache Hit - Line must be in one of M, E, or S. Since
@@ -120,7 +120,7 @@ MESI_Controller::STATES MESI_Controller::CheckCacheLoad_Transition(void) {
     }
 }
 
-MESI_Controller::STATES MESI_Controller::IssueRead_Transition(void) {
+MSI_Controller::STATES MSI_Controller::IssueRead_Transition(void) {
     if (awaitingBusRead || awaitingDataLocal) {
         return ISSUE_READ_STATE;   
     } else {
@@ -128,12 +128,12 @@ MESI_Controller::STATES MESI_Controller::IssueRead_Transition(void) {
     }
 }
 
-MESI_Controller::STATES MESI_Controller::UpdateCacheLoad_Transition(void) {
+MSI_Controller::STATES MSI_Controller::UpdateCacheLoad_Transition(void) {
     // No branches here
     return IDLE_STATE;
 }
 
-MESI_Controller::STATES MESI_Controller::CheckCacheStore_Transition(void) {
+MSI_Controller::STATES MSI_Controller::CheckCacheStore_Transition(void) {
     unsigned int address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
         // This item is in the cache - need to check MESI bits to determine
@@ -165,7 +165,7 @@ MESI_Controller::STATES MESI_Controller::CheckCacheStore_Transition(void) {
     }
 }
 
-MESI_Controller::STATES MESI_Controller::IssueReadX_Transition(void) {
+MSI_Controller::STATES MSI_Controller::IssueReadX_Transition(void) {
     if (awaitingBusRead || awaitingDataLocal) {
         return ISSUE_READX_STATE;
     } else {
@@ -173,12 +173,12 @@ MESI_Controller::STATES MESI_Controller::IssueReadX_Transition(void) {
     }
 }
 
-MESI_Controller::STATES MESI_Controller::IssueInvalidate_Transition(void) {
+MSI_Controller::STATES MSI_Controller::IssueInvalidate_Transition(void) {
     // Message is sent to invalidate other copies
     return INVALIDATE_WAIT;
 }
 
-MESI_Controller::STATES MESI_Controller::InvalidateWait_Transition(void) {
+MSI_Controller::STATES MSI_Controller::InvalidateWait_Transition(void) {
     if (outgoingCommandWaitFlag) {
         return INVALIDATE_WAIT;
     } else {
@@ -186,12 +186,12 @@ MESI_Controller::STATES MESI_Controller::InvalidateWait_Transition(void) {
     }
 }
 
-MESI_Controller::STATES MESI_Controller::UpdateCacheStore_Transition(void) {
+MSI_Controller::STATES MSI_Controller::UpdateCacheStore_Transition(void) {
     return IDLE_STATE;
 }
 
 //Define state action functions
-void MESI_Controller::Idle_Action(void) {
+void MSI_Controller::Idle_Action(void) {
     // Reset boolean flags
     gotDataReturnFromBusRead_Memory    = false;
     gotDataReturnFromBusRead_Processor = false;
@@ -204,11 +204,11 @@ void MESI_Controller::Idle_Action(void) {
     sawInvalidateToMyIncomingAddress   = false;
 }
 
-void MESI_Controller::CheckCacheLoad_Action(void) {
+void MSI_Controller::CheckCacheLoad_Action(void) {
     transitionState();
 }
 
-void MESI_Controller::IssueRead_Action(void) {
+void MSI_Controller::IssueRead_Action(void) {
     if (!queuedBusRead) {
         // If we have done so yet in this state, queue the bus read,
         // otherwise, we just wait in the state without performing any
@@ -221,7 +221,7 @@ void MESI_Controller::IssueRead_Action(void) {
     }
 }
 
-void MESI_Controller::UpdateCacheLoad_Action(void) {
+void MSI_Controller::UpdateCacheLoad_Action(void) {
     // When updating the cache for a load command, it will
     // either be transitioned to E or S, depending on 
     // the state of other caches. If the data comes
@@ -272,14 +272,14 @@ void MESI_Controller::UpdateCacheLoad_Action(void) {
     cache->updateLRU(address);
 }
 
-void MESI_Controller::CheckCacheStore_Action(void) {
+void MSI_Controller::CheckCacheStore_Action(void) {
     // Nothing occurs in this state except cache checks,
     // which only determine state transition (see
     // CheckCacheStore_Transition())
     transitionState();
 }
 
-void MESI_Controller::IssueReadX_Action(void) {
+void MSI_Controller::IssueReadX_Action(void) {
     if (!queuedBusRead) {
         // If we have done so yet in this state, queue the bus read,
         // otherwise, we just wait in the state without performing any action
@@ -291,18 +291,18 @@ void MESI_Controller::IssueReadX_Action(void) {
     }
 }
 
-void MESI_Controller::IssueInvalidate_Action(void) {
+void MSI_Controller::IssueInvalidate_Action(void) {
     unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     queueBusCommand(INVALIDATE,address);
     outgoingCommandWaitFlag = true;
     outgoingCommandWaitCode = INVALIDATE;
 }
 
-void MESI_Controller::InvalidateWait_Action(void) {
+void MSI_Controller::InvalidateWait_Action(void) {
     
 }
 
-void MESI_Controller::UpdateCacheStore_Action(void) {
+void MSI_Controller::UpdateCacheStore_Action(void) {
     // In this state, the cache line is being updated
     // to MODIFIED.
     unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
@@ -336,7 +336,7 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
     cache->updateLRU(address);
 }
 
-void MESI_Controller::acceptBusTransaction(BusRequest* d) {
+void MSI_Controller::acceptBusTransaction(BusRequest* d) {
     switch(d->commandCode) {
         case BUSREAD:
             handleBusRead(d);
@@ -359,7 +359,7 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
     }
 }
 
-void MESI_Controller::handleBusRead(BusRequest* d) {
+void MSI_Controller::handleBusRead(BusRequest* d) {
     // We have to check if we have this in the cache, and if
     // we do, update the cache line state to shared. We also
     // need to issue a DATA_RETURN_PROCESSOR or BUSWRITE with the data
@@ -389,7 +389,7 @@ void MESI_Controller::handleBusRead(BusRequest* d) {
     }
 }
 
-void MESI_Controller::handleBusReadX(BusRequest* d) {
+void MSI_Controller::handleBusReadX(BusRequest* d) {
     // If we have this item in the cache, then it must be invalidated.
     // If we currently have a modified copy of it, we must issue a BUSWRITE.
     // If we have a copy of the line, but it is not modified, we will issue a
@@ -415,7 +415,7 @@ void MESI_Controller::handleBusReadX(BusRequest* d) {
     }
 }
 
-void MESI_Controller::handleBusWrite(BusRequest* d) {
+void MSI_Controller::handleBusWrite(BusRequest* d) {
     // BUSWRITES are only issued when a modified line is being written back
     // to memory. Since we aren't currently waiting for any data and just observed
     // a BUSWRITE, it is safe to assume that this cache does not contain the line
@@ -433,7 +433,7 @@ void MESI_Controller::handleBusWrite(BusRequest* d) {
     assert(!cache->contains(address));
 }
 
-void MESI_Controller::handleDataReturnMemory(BusRequest* d) {
+void MSI_Controller::handleDataReturnMemory(BusRequest* d) {
     unsigned int address = d->payload;
     if (awaitingDataRemote(address)) {
         gotDataReturnFromBusRead_Memory = true;
@@ -442,7 +442,7 @@ void MESI_Controller::handleDataReturnMemory(BusRequest* d) {
     }
 }
 
-void MESI_Controller::handleDataReturnProcessor(BusRequest* d) {
+void MSI_Controller::handleDataReturnProcessor(BusRequest* d) {
     // If we've previously queued a DATA_RETURN_PROCESSOR to the same
     // address, we should cancel this request since it was serviced by
     // another cache controller
@@ -455,7 +455,7 @@ void MESI_Controller::handleDataReturnProcessor(BusRequest* d) {
     cancelBusRequest(DATA_RETURN_PROCESSOR,address);
 }
 
-void MESI_Controller::handleInvalidate(BusRequest* d) {
+void MSI_Controller::handleInvalidate(BusRequest* d) {
     // If we have this line in the cache, we must invalidate it.
     // If the line is modified, it would need to be streamed out.
     // Given our protocol, this should not be possible though,
@@ -476,7 +476,7 @@ void MESI_Controller::handleInvalidate(BusRequest* d) {
     }
 }
 
-void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload) {
+void MSI_Controller::queueBusCommand(unsigned int command, unsigned int payload) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
     r->payload       = cache->getLineAlignedAddress(payload);
@@ -485,7 +485,7 @@ void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload
     addNewBusRequest(r);
 }
 
-void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+void MSI_Controller::queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
     r->payload       = cache->getLineAlignedAddress(payload);
@@ -494,7 +494,7 @@ void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload
     addNewBusRequest(r);
 }
 
-bool MESI_Controller::awaitingDataRemote(unsigned int address) {
+bool MSI_Controller::awaitingDataRemote(unsigned int address) {
     assert(dispatchedBusRead != NULL);
     return (((cache->getLineAlignedAddress(currentInstruction->ADDRESS)) == address) && awaitingBusRead);
 }

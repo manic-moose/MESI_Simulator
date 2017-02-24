@@ -1,5 +1,5 @@
-#ifndef MESI_CONTROLLER_H
-#define MESI_CONTROLLER_H
+#ifndef MSI_Controller_H
+#define MSI_Controller_H
 
 #include "CacheController.h"
 
@@ -10,7 +10,7 @@
 
 using namespace std;
 
-class MESI_Controller : public CacheController {
+class MSI_Controller : public CacheController {
   
 private:
     
@@ -96,7 +96,7 @@ private:
     
 public:
     
-    MESI_Controller() : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {
+    MSI_Controller() : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {
         gotDataReturnFromBusRead_Memory    = false;
         gotDataReturnFromBusRead_Processor = false;
         queuedBusRead                      = false;
@@ -113,4 +113,4 @@ public:
 };
 
 
-#endif //MESI_CONTROLLER_H
+#endif //MSI_Controller_H
