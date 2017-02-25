@@ -15,6 +15,8 @@ private:
     Memory* memory;
     Interconnect* interconnect;
     
+    unsigned long tickNumber;
+    
     
 public:
     
@@ -30,6 +32,7 @@ public:
         }
         
         interconnect->addNode(memory, numProcessors + 1);
+        tickNumber = 0;
     }
     
     void insertInstruction(Instruction* i, unsigned int processorNum);
