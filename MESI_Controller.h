@@ -89,6 +89,7 @@ private:
     void handleDataReturnMemory(BusRequest* d);
     void handleDataReturnProcessor(BusRequest* d);
     void handleInvalidate(BusRequest* d);
+    void handleShareMe(BusRequest* d);
     
     // Returns true if a bus read request was issued
     // to the given address.

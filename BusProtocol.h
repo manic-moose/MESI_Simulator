@@ -23,6 +23,8 @@
 // cycles.
 #define NULL_BURST 6
 
+#define SHAREME 7
+
 #define IS_DATA_RETURN(a) ((a == DATA_RETURN_MEMORY) || (a == DATA_RETURN_PROCESSOR))
 
 

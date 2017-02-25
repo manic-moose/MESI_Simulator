@@ -354,6 +354,24 @@ void MESI_Controller::acceptBusTransaction(BusRequest* d) {
         case INVALIDATE:
             handleInvalidate(d);
             break;
+        case NULL_BURST:
+            break;
+        case SHAREME:
+            handleShareMe(d);
+            break;
+    }
+}
+
+void MESI_Controller::handleShareMe(BusRequest* d) {
+    unsigned int address = d->payload;
+    if (cache->contains(address)) {
+        if (!cache->isShared(address)) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED  Payload: " << address << endl;
+            cache->setShared(address);
+        }
+    } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
+        // Will cause transition to shared upon receiving data
+        sawBusReadToMyIncomingAddress = true;
     }
 }
 
@@ -384,6 +402,7 @@ void MESI_Controller::handleBusRead(BusRequest* d) {
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
         // We've queued up a read command to that address...
         sawBusReadToMyIncomingAddress = true;
+        queueBusCommand(SHAREME, address);
     }
 }
 
