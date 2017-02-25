@@ -28,12 +28,12 @@ public:
     virtual bool requestsLock(void) =0;
     
     // Functions for granting and releasing locks
-    bool hasLock(void);
-    void grantLock(void);
-    void releaseLock(void);
+    virtual bool hasLock(void);
+    virtual void grantLock(void);
+    virtual void releaseLock(void);
     
     // Returns the address of this node
-    unsigned int getAddress(void);
+    virtual unsigned int getAddress(void);
     virtual void setAddress(unsigned int address);
     
 protected:

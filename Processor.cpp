@@ -161,3 +161,19 @@ void Processor::setAddress(unsigned int address) {
 unsigned long Processor::getTotalMemoryOps(void) {
     return numberMemoryOperations;
 }
+
+unsigned int Processor::getAddress(void) {
+    return cacheController->getAddress();   
+}
+
+bool Processor::hasLock(void) {
+    return cacheController->hasLock();
+}
+
+void Processor::grantLock(void) {
+    cacheController->grantLock();
+}
+
+void Processor::releaseLock(void) {
+    cacheController->releaseLock();
+}

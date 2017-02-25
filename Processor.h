@@ -83,6 +83,11 @@ public:
     bool requestsTransaction();
     bool requestsLock(void);
     void setAddress(unsigned int address);
+    unsigned int getAddress(void);
+    bool hasLock(void);
+    void grantLock(void);
+    void releaseLock(void);
+    
 
     // Other Public Methods
     bool isIdle(void); // Indicates the processor is read to process the next instruction
