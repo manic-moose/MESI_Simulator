@@ -248,7 +248,7 @@ void MESI_Controller::UpdateCacheLoad_Action(void) {
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
                 cout << "0  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
-                queueBusCommand(BUSWRITE,evictedLineAdx);
+                queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
         cache->insertLine(address);
@@ -320,12 +320,13 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
                 cout << "X  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
-                queueBusCommand(BUSWRITE,evictedLineAdx);
+                queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
         cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
         cache->insertLine(address);   
         cache->setModified(address);
+        assert(cache->isModified(address));
     } else {
         if (!cache->isModified(address)) {
             cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
@@ -366,7 +367,7 @@ void MESI_Controller::handleShareMe(BusRequest* d) {
     unsigned int address = d->payload;
     if (cache->contains(address)) {
         if (!cache->isShared(address)) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED  Payload: " << address << endl;
+            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_0  Payload: " << address << endl;
             cache->setShared(address);
         }
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
@@ -393,10 +394,10 @@ void MESI_Controller::handleBusRead(BusRequest* d) {
             cout << "1 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
         } else if (cache->isModified(address)) {
             cout << "4  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
-            queueBusCommand(BUSWRITE, address);
+            queueMaxPriorityBusCommand(BUSWRITE, address);
         }
         if (!cache->isShared(address)) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED  Payload: " << address << endl;
+            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_1  Payload: " << address << endl;
         }
         cache->setShared(address);
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
@@ -420,7 +421,7 @@ void MESI_Controller::handleBusReadX(BusRequest* d) {
             cout << "2 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
         } else if (cache->isModified(address)) {
             cout << "5  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
-            queueBusCommand(BUSWRITE, address);
+            queueMaxPriorityBusCommand(BUSWRITE, address);
         }
         cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
         cache->invalidate(address);
@@ -484,7 +485,7 @@ void MESI_Controller::handleInvalidate(BusRequest* d) {
     unsigned int address = d->payload;
     if (cache->contains(address)) {
         if (cache->isModified(address)) {
-            queueBusCommand(BUSWRITE, address);   
+            queueMaxPriorityBusCommand(BUSWRITE, address);   
         }
         cout << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_1  Payload: " << address << endl;
         cache->invalidate(address);
@@ -494,15 +495,6 @@ void MESI_Controller::handleInvalidate(BusRequest* d) {
     }
 }
 
-void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload) {
-    BusRequest* r    = new BusRequest;
-    r->commandCode   = command;
-    r->payload       = cache->getLineAlignedAddress(payload);
-    r->targetAddress = BROADCAST_ADX;
-    r->sourceAddress = getAddress();
-    addNewBusRequest(r);
-}
-
 void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
@@ -510,6 +502,15 @@ void MESI_Controller::queueBusCommand(unsigned int command, unsigned int payload
     r->targetAddress = targetAdx;
     r->sourceAddress = getAddress();
     addNewBusRequest(r);
+}
+
+void MESI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+    BusRequest* r    = new BusRequest;
+    r->commandCode   = command;
+    r->payload       = cache->getLineAlignedAddress(payload);
+    r->targetAddress = targetAdx;
+    r->sourceAddress = getAddress();
+    addNewMaxPriorityBusRequest(r);
 }
 
 bool MESI_Controller::awaitingDataRemote(unsigned int address) {

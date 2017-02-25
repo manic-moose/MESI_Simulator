@@ -21,6 +21,7 @@ public:
         pendingInstructionFlag = false;
         awaitingBusRead = 0;
         busReqQueue = new vector<BusRequest*>;
+        maxPriorityQueue = new vector<BusRequest*>;
         outgoingCommandWaitFlag = false;
         outgoingCommandWaitCode = 0;
         burstLen = burstLength;
@@ -35,6 +36,7 @@ public:
     bool requestsTransaction(void);
     bool requestsLock(void);
     BusRequest* initiateBusTransaction(void);
+    bool requestsMaxPriority(void);
     
     
     bool hasPendingInstruction(void);
@@ -73,6 +75,7 @@ protected:
     bool pendingInstructionFlag;      // Indicates that the controller is busy with an instruction
     
     vector<BusRequest*>* busReqQueue;  // Queue of bus communications to transmit
+    vector<BusRequest*>* maxPriorityQueue; // Queue for maximum priority requests
     
     BusRequest* nextToIssue;          // Holds the very next bus communication
     bool awaitingBusRead;             // Indicates that a bus read was issued, and data has not returned
@@ -91,6 +94,7 @@ protected:
     
     // Adds new bus request to the end of the bus request queue
     void addNewBusRequest(BusRequest* r);
+    void addNewMaxPriorityBusRequest(BusRequest* r);
     
     // Searches through the bus request queue/next to issue and cancels
     // the first request it find matching the given

@@ -4,8 +4,12 @@ void CacheController::addNewBusRequest(BusRequest* r) {
     busReqQueue->insert(busReqQueue->begin(), r);   
 }
 
+void CacheController::addNewMaxPriorityBusRequest(BusRequest* r) {
+    maxPriorityQueue->insert(maxPriorityQueue->begin(), r);   
+}
+
 bool CacheController::hasQueuedBusRequest(void) {
-    return (busReqQueue->size() > 0);
+    return (busReqQueue->size() > 0) || (maxPriorityQueue->size() > 0);
 }
 
 bool CacheController::hasBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload) {
@@ -33,7 +37,7 @@ void CacheController::deleteBusRequestWithParams(unsigned int code, unsigned int
 }
 
 bool CacheController::requestsTransaction(void) {
-    return busReqQueue->size() > 0;
+    return ((busReqQueue->size() > 0) || (maxPriorityQueue->size() > 0));
 }
 
 bool CacheController::requestsLock(void) {
@@ -42,7 +46,13 @@ bool CacheController::requestsLock(void) {
 }
 
 BusRequest* CacheController::initiateBusTransaction(void) {
-    nextToIssue = busReqQueue->back();
+    bool maxPriorityTrans = false;
+    if (maxPriorityQueue->size() > 0) {
+        nextToIssue = maxPriorityQueue->back();
+        maxPriorityTrans = true;
+    } else {
+        nextToIssue = busReqQueue->back();
+    }
     unsigned int code = nextToIssue->commandCode;
     unsigned int payload = nextToIssue->payload;
     if (bursting) {
@@ -50,7 +60,11 @@ BusRequest* CacheController::initiateBusTransaction(void) {
             burstCounter++;   
         }
         if (burstCounter == burstLen) {
-            busReqQueue->pop_back();
+            if (maxPriorityTrans) {
+                maxPriorityQueue->pop_back();
+            } else {
+                busReqQueue->pop_back();
+            }
             burstCounter = 0;
         } else {
             BusRequest* nullBurst = new BusRequest;
@@ -61,7 +75,11 @@ BusRequest* CacheController::initiateBusTransaction(void) {
             nextToIssue = nullBurst;
         }
     } else {
-        busReqQueue->pop_back();
+        if (maxPriorityTrans) {
+            maxPriorityQueue->pop_back();
+        } else {
+            busReqQueue->pop_back();
+        }
     }
     code = nextToIssue->commandCode; // Update in case next is actually a null burst
     switch (code) {
@@ -114,6 +132,10 @@ void CacheController::invalidateCacheItem(unsigned int memoryAdx) {
     }
 }
 
+bool CacheController::requestsMaxPriority (void) {
+    return (maxPriorityQueue->size() > 0);
+}
+
 void CacheController::handleMemoryAccess(Instruction* i) {
     assert(!hasPendingInstruction());
     
@@ -128,7 +150,15 @@ void CacheController::handleMemoryAccess(Instruction* i) {
 }
 
 void CacheController::updateBusBurstRequest(void) {
-    if (busReqQueue->size() > 0) {
+    if (maxPriorityQueue->size() > 0) {
+        BusRequest* next = maxPriorityQueue->back();
+        unsigned int code = next->commandCode;
+        if (code == BUSWRITE || code == DATA_RETURN_PROCESSOR) {
+            bursting = true;
+        } else {
+            bursting = false;
+        }
+    } else if (busReqQueue->size() > 0) {
         BusRequest* next = busReqQueue->back();
         unsigned int code = next->commandCode;
         if (code == BUSWRITE || code == DATA_RETURN_PROCESSOR) {

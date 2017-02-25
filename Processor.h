@@ -87,6 +87,7 @@ public:
     bool hasLock(void);
     void grantLock(void);
     void releaseLock(void);
+    bool requestsMaxPriority(void);
     
 
     // Other Public Methods

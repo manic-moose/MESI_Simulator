@@ -177,3 +177,8 @@ void Processor::grantLock(void) {
 void Processor::releaseLock(void) {
     cacheController->releaseLock();
 }
+
+bool Processor::requestsMaxPriority(void) {
+    return cacheController->requestsMaxPriority();
+}
+
