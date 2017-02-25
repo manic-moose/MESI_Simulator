@@ -57,7 +57,7 @@ BusRequest* CacheController::initiateBusTransaction(void) {
             nullBurst->commandCode = NULL_BURST;
             nullBurst->targetAddress = BROADCAST_ADX;
             nullBurst->sourceAddress = getAddress();
-            nullBurst->payload = 0;
+            nullBurst->payload = payload;
             nextToIssue = nullBurst;
         }
     } else {
@@ -172,6 +172,9 @@ void CacheController::cancelBusRequest(unsigned int commandCode, unsigned int pa
                     break;
                 case NULL_BURST:
                     cout << "Controller: " << getAddress() << " Code: CANCEL_NULL_BURST             Payload: " << payload << endl;
+                    break;
+                case SHAREME:
+                    cout << "Controller: " << getAddress() << " Code: SHAREME                       Payload: " << payload << endl;
                     break;
             }
             busReqQueue->erase(it);
