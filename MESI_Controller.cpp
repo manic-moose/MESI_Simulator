@@ -438,6 +438,7 @@ void MESI_Controller::handleDataReturnMemory(BusRequest* d) {
         awaitingBusRead                 = false;
         awaitingDataLocal               = false;
     }
+    cancelBusRequest(DATA_RETURN_PROCESSOR,address);
 }
 
 void MESI_Controller::handleDataReturnProcessor(BusRequest* d) {
