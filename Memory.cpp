@@ -21,20 +21,16 @@ void Memory::acceptBusTransaction(BusRequest* d) {
             }
         }
         
-    }
-    
-    // Still may want to handle cancelling memory operations
-    // that are serviced by cache to cache transfers
-    
+    }   
 }
 
 BusRequest* Memory::initiateBusTransaction(void) {
     BusRequest* nextRequest = busReqQueue->front();
     unsigned int code = nextRequest->commandCode;
     if (code == DATA_RETURN_MEMORY) {
-        cout << "MEMORY Code: DATA_RETURN_MEMORY  Payload: " << nextRequest->payload << endl;
+        cout << "MEMORY Code: DATA_RETURN_MEMORY            Payload: " << nextRequest->payload << endl;
     } else if (code == NULL_BURST) {
-        cout << "MEMORY Code: NULL_BURST          Payload: " << nextRequest->payload << endl;
+        cout << "MEMORY Code: NULL_BURST                    Payload: " << nextRequest->payload << endl;
     } else {
         cout << "MEMORY Code: UNHANDLED  CODE: " << code << "  Payload: " << nextRequest->payload << endl;
     }
@@ -63,7 +59,7 @@ void Memory::Tick(void) {
             nullBurst->commandCode = NULL_BURST;
             nullBurst->targetAddress = BROADCAST_ADX;
             nullBurst->sourceAddress = getAddress();
-            nullBurst->payload = 0;
+            nullBurst->payload = burstRequest->payload;
             busReqQueue->push(nullBurst);
         }
         if (hasLock()) {
