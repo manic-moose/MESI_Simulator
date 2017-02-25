@@ -27,6 +27,13 @@ public:
     // as requestsLock returns true.
     virtual bool requestsLock(void) =0;
     
+    // If returns true, the bus priotiy queue
+    // will automatically give this node max priority
+    // and ignore the priority queue when searching
+    // for bus transaction. Must be handled carefully
+    // if used to avoid deadlocks.
+    virtual bool requestsMaxPriority(void);
+    
     // Functions for granting and releasing locks
     virtual bool hasLock(void);
     virtual void grantLock(void);
@@ -35,6 +42,7 @@ public:
     // Returns the address of this node
     virtual unsigned int getAddress(void);
     virtual void setAddress(unsigned int address);
+
     
 protected:
     

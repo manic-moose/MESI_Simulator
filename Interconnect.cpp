@@ -14,6 +14,14 @@ void Interconnect::Tick(void) {
 void Interconnect::serviceBusNodes(void) {
     for(vector<unsigned int>::iterator it = priorityQueue->begin(); it < priorityQueue->end(); it++) {
         unsigned int address = (*it);
+        BusNode* n = getNode(address);
+        if (n->requestsMaxPriority()) {
+            serviceBusNode(address);
+            return;
+        }
+    }
+    for(vector<unsigned int>::iterator it = priorityQueue->begin(); it < priorityQueue->end(); it++) {
+        unsigned int address = (*it);
         // Only handle a single bus communication in each service
         // cycle (one per clock tick)
         if (serviceBusNode(address)) {

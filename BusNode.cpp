@@ -19,3 +19,7 @@ void BusNode::grantLock(void) {
 void BusNode::releaseLock(void) {
     nodeIsLocked = false;
 }
+
+bool BusNode::requestsMaxPriority(void) {
+    return false;   
+}
