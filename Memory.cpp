@@ -30,7 +30,14 @@ void Memory::acceptBusTransaction(BusRequest* d) {
 
 BusRequest* Memory::initiateBusTransaction(void) {
     BusRequest* nextRequest = busReqQueue->front();
-    cout << "MEMORY Code: DATA_RETURN_MEMORY  Payload: " << nextRequest->payload << endl;
+    unsigned int code = nextRequest->commandCode;
+    if (code == DATA_RETURN_MEMORY) {
+        cout << "MEMORY Code: DATA_RETURN_MEMORY  Payload: " << nextRequest->payload << endl;
+    } else if (code == NULL_BURST) {
+        cout << "MEMORY Code: NULL_BURST          Payload: " << nextRequest->payload << endl;
+    } else {
+        cout << "MEMORY Code: UNHANDLED  CODE: " << code << "  Payload: " << nextRequest->payload << endl;
+    }
     busReqQueue->pop();
     memSendCounts++;
     return nextRequest;
@@ -47,10 +54,17 @@ bool Memory::requestsLock(void) {
 void Memory::Tick(void) {
     cout << "Current Memory Ops Count " << (memTracker->size()) << endl;
     if (bursting) {
-        if (burstCounter == burstLen) {
+        if (burstCounter == burstLen - 1) {
             busReqQueue->push(burstRequest);
             bursting = false;
             burstCounter = 0;
+        } else {
+            BusRequest* nullBurst = new BusRequest;
+            nullBurst->commandCode = NULL_BURST;
+            nullBurst->targetAddress = BROADCAST_ADX;
+            nullBurst->sourceAddress = getAddress();
+            nullBurst->payload = 0;
+            busReqQueue->push(nullBurst);
         }
         if (hasLock()) {
             // Only increment if the lock has been granted

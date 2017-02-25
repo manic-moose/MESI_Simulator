@@ -24,10 +24,12 @@ void Interconnect::serviceBusNodes(void) {
 
 bool Interconnect::serviceBusNode(unsigned int address) {
     BusNode* txNode = getNode(address);
+    bool retVal = false;
     if (txNode->requestsLock()) {
         lockedAddress = address;
         txNode->grantLock();
         nodeLocked = true;
+        retVal = true;
     } else {
         txNode->releaseLock();
         nodeLocked = false;
@@ -43,9 +45,9 @@ bool Interconnect::serviceBusNode(unsigned int address) {
         }
         // We're now done with the BusRequest, so lets delete it.
         delete request;
-        return true;
+        retVal = true;
     }
-    return false;
+    return retVal;
 }
 
 void Interconnect::broadcastBusRequest(BusRequest* r) {

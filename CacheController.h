@@ -16,13 +16,16 @@ class CacheController : public BusNode {
 public:
     
     CacheController(unsigned int adxLength, unsigned int setCount,
-                   unsigned int linesPerSet, unsigned int bytesPerLine) {
+                   unsigned int linesPerSet, unsigned int bytesPerLine, unsigned int burstLength = 8) {
         cache =  new Cache(adxLength,setCount,linesPerSet,bytesPerLine);
         pendingInstructionFlag = false;
         awaitingBusRead = 0;
         busReqQueue = new vector<BusRequest*>;
         outgoingCommandWaitFlag = false;
         outgoingCommandWaitCode = 0;
+        burstLen = burstLength;
+        burstCounter = 0;
+        bursting = false;
     }
     
     // Function to handle LOAD or STORE commands from the processor
@@ -61,6 +64,10 @@ protected:
     // issue a bus write for the memory address.
     void invalidateCacheItem(unsigned int memoryAdx);
     
+    bool bursting;
+    unsigned int burstLen;
+    unsigned int burstCounter;
+    
     
     Instruction* currentInstruction;  // The current LOAD/STORE instruction being handled
     bool pendingInstructionFlag;      // Indicates that the controller is busy with an instruction
@@ -89,6 +96,9 @@ protected:
     // the first request it find matching the given
     // command code and payload.
     void cancelBusRequest(unsigned int commandCode, unsigned int payload);
+    
+   
+    void updateBusBurstRequest(void);
     
 };
 

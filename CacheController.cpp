@@ -37,15 +37,33 @@ bool CacheController::requestsTransaction(void) {
 }
 
 bool CacheController::requestsLock(void) {
-    return false;
+    return bursting;
     //return requestsTransaction();   
 }
 
 BusRequest* CacheController::initiateBusTransaction(void) {
     nextToIssue = busReqQueue->back();
-    busReqQueue->pop_back();
     unsigned int code = nextToIssue->commandCode;
     unsigned int payload = nextToIssue->payload;
+    if (bursting) {
+        if (hasLock()) {
+            burstCounter++;   
+        }
+        if (burstCounter == burstLen) {
+            busReqQueue->pop_back();
+            burstCounter = 0;
+        } else {
+            BusRequest* nullBurst = new BusRequest;
+            nullBurst->commandCode = NULL_BURST;
+            nullBurst->targetAddress = BROADCAST_ADX;
+            nullBurst->sourceAddress = getAddress();
+            nullBurst->payload = 0;
+            nextToIssue = nullBurst;
+        }
+    } else {
+        busReqQueue->pop_back();
+    }
+    code = nextToIssue->commandCode; // Update in case next is actually a null burst
     switch (code) {
         case BUSREAD:
             cout << "Controller: " << getAddress() << " Code: BUSREAD                Payload: " << payload << endl;
@@ -64,6 +82,9 @@ BusRequest* CacheController::initiateBusTransaction(void) {
             break;
         case INVALIDATE:
             cout << "Controller: " << getAddress() << " Code: INVALIDATE             Payload: " << payload << endl;
+            break;
+        case NULL_BURST:
+            cout << "Controller: " << getAddress() << " Code: NULL_BURST             Payload: " << payload << endl;
             break;
     }
     if ((nextToIssue->commandCode == BUSREAD) || nextToIssue->commandCode == BUSREADX) {
@@ -106,16 +127,53 @@ void CacheController::handleMemoryAccess(Instruction* i) {
     pendingInstructionFlag = true;
 }
 
+void CacheController::updateBusBurstRequest(void) {
+    if (busReqQueue->size() > 0) {
+        BusRequest* next = busReqQueue->back();
+        unsigned int code = next->commandCode;
+        if (code == BUSWRITE || code == DATA_RETURN_PROCESSOR) {
+            bursting = true;
+        } else {
+            bursting = false;
+        }
+    } else {
+        bursting = false;   
+    }
+}
+
 void CacheController::Tick(void) {
     // Transitions to the new state and calls the actions function
     transitionState();
+    updateBusBurstRequest();
 }
 
 void CacheController::cancelBusRequest(unsigned int commandCode, unsigned int payload) {
     for (vector<BusRequest*>::iterator it = busReqQueue->begin(); it < busReqQueue->end(); it++) {
         BusRequest* r = (*it);
         if ((r->commandCode == commandCode) && (r->payload == payload)) {
-            cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_PROC  Payload: " << payload << endl;
+            switch (commandCode) {
+                case BUSREAD:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREAD                Payload: " << payload << endl;
+                    break;
+                case BUSREADX:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREADX               Payload: " << payload << endl;
+                    break;
+                case BUSWRITE:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSWRITE               Payload: " << payload << endl;
+                    break;
+                case DATA_RETURN_MEMORY:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_MEMORY     Payload: " << payload << endl;
+                    break;
+                case DATA_RETURN_PROCESSOR:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
+                    break;
+                case INVALIDATE:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_INVALIDATE             Payload: " << payload << endl;
+                    break;
+                case NULL_BURST:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_NULL_BURST             Payload: " << payload << endl;
+                    break;
+            }
             busReqQueue->erase(it);
             return;
         }

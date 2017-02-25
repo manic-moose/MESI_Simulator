@@ -18,6 +18,11 @@
 
 #define INVALIDATE 5
 
+// This is just use as a dummy output to 
+// simulate bursting data across several
+// cycles.
+#define NULL_BURST 6
+
 #define IS_DATA_RETURN(a) ((a == DATA_RETURN_MEMORY) || (a == DATA_RETURN_PROCESSOR))
 
 
