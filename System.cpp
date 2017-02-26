@@ -35,10 +35,20 @@ void System::reportMemoryOpStatistics(void) {
     for (int i =0; i <  processors->size() ; i++) {
         Processor* p = processors->at(i);
         unsigned long numOps = p->getTotalMemoryOps();
+        double averageMemoryWait = p->getAverageMemoryLatency();
         sum += numOps;
-        cout << " Processor " << i << "Total Memory Operations: " << numOps << endl;
+        cout << " Processor " << i << "Total Memory Operations: " << numOps << " Average Latency: " << averageMemoryWait << endl;
     }
-    cout << "Sum: " << sum << endl;
+    // Calculate overall average latency
+    double overallAvgLatency = 0.0;
+    for (int i =0; i <  processors->size() ; i++) {
+        Processor* p = processors->at(i);
+        unsigned long numOps = p->getTotalMemoryOps();
+        double averageMemoryWait = p->getAverageMemoryLatency();
+        overallAvgLatency += averageMemoryWait*((double)numOps)/((double)sum);
+    }
+    cout << "Sum: " << sum << "  Overall Average Latency: " << overallAvgLatency << endl;
     cout << "Memory Serviced Operations: " << memory->getMemCount() << endl;
+    interconnect->reportBusStatistics();
     
 }

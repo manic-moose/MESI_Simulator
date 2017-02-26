@@ -3,12 +3,31 @@
 #include <iostream>
 
 void Interconnect::Tick(void) {
+    collectBusStatistics();
     if (nodeLocked) {
         serviceBusNode(lockedAddress);
     } else {
         serviceBusNodes();
     }
     updatePriorityQueue();
+}
+
+void Interconnect::collectBusStatistics(void) {
+    numTicks++;
+    for(vector<unsigned int>::iterator it = priorityQueue->begin(); it < priorityQueue->end(); it++) {
+        unsigned int address = (*it);
+        BusNode* n = getNode(address);
+        if (n->requestsTransaction()) {
+            totalBusContentionCount++;   
+        }
+    }
+}
+    
+void Interconnect::reportBusStatistics(void) {
+    double contCount = (double) totalBusContentionCount;
+    double tickCount = (double) numTicks;
+    double busContention = contCount/tickCount;
+    cout << "Bus Contention: " << busContention << endl;
 }
 
 void Interconnect::serviceBusNodes(void) {

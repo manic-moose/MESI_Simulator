@@ -27,6 +27,7 @@ private:
     queue<Instruction*>* instrQueue;
     
     unsigned long numberMemoryOperations;
+    unsigned long totalWaitCycles;
     
     typedef enum E_STATES {
         IDLE_STATE,
@@ -107,6 +108,8 @@ public:
     void processInstruction(Instruction* i);
     
     unsigned long getTotalMemoryOps(void);
+    
+    double getAverageMemoryLatency(void);
     
 };
 #endif //PROCESSOR_H

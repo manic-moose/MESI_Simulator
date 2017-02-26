@@ -28,10 +28,16 @@ public:
     BusNode* getNode(unsigned int address);
     unsigned int getNodeCount(void);
     
+    void reportBusStatistics(void);
+    
 private:
     
     bool nodeLocked;
     unsigned int lockedAddress;
+    
+    // Some statistical data collection variables
+    unsigned long numTicks;
+    unsigned long totalBusContentionCount;
     
     // Map of each address to a BusNode
     map <unsigned int, BusNode*> nodes;
@@ -55,6 +61,8 @@ private:
     // Broadcasts a message to all nodes except
     // the source of the transmission
     void broadcastBusRequest(BusRequest* r);
+    
+    void collectBusStatistics(void);
     
 
 };

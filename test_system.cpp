@@ -2,7 +2,7 @@
 #include "Instruction.h"
 #include <stdlib.h>
 
-#define NUM_PROCESSORS 4
+#define NUM_PROCESSORS 8
 #define MEMORY_LATENCY 100
 #define NUM_TICKS 1000000
 

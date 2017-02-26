@@ -38,6 +38,7 @@ void Processor::CheckOpType_Action(void) {
 void Processor::MemoryReturnWait_Action(void) {
     // This function is used to keep track of how
     // long each memory operation takes
+    totalWaitCycles++;
 }
 
 Processor::STATES Processor::Idle_Transition(void) {
@@ -160,6 +161,12 @@ void Processor::setAddress(unsigned int address) {
 
 unsigned long Processor::getTotalMemoryOps(void) {
     return numberMemoryOperations;
+}
+
+double Processor::getAverageMemoryLatency(void) {
+    double numMemOps = getTotalMemoryOps();
+    double waitCycles = totalWaitCycles;
+    return waitCycles/numMemOps;
 }
 
 unsigned int Processor::getAddress(void) {
