@@ -3,12 +3,12 @@
 #include <iostream>
 
 void Interconnect::Tick(void) {
-    collectBusStatistics();
     if (nodeLocked) {
         serviceBusNode(lockedAddress);
     } else {
         serviceBusNodes();
     }
+    collectBusStatistics();
     updatePriorityQueue();
 }
 
