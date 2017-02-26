@@ -65,7 +65,7 @@ public:
         if (controllerType == MI_CONTROLLER_TYPE) {
             cacheController = new MI_Controller;
         } else if (controllerType == MSI_CONTROLLER_TYPE) {
-            cout << "MSI Not yet enabled" << endl;
+            cacheController = new MSI_Controller;
         } else if (controllerType == MESI_CONTROLLER_TYPE) {
             cacheController = new MESI_Controller;
         } else {
