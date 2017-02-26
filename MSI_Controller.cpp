@@ -288,7 +288,7 @@ void MSI_Controller::IssueReadX_Action(void) {
 
 void MSI_Controller::IssueInvalidate_Action(void) {
     unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
-    queueBusCommand(INVALIDATE,address);
+    queueMaxPriorityBusCommand(INVALIDATE,address);
     outgoingCommandWaitFlag = true;
     outgoingCommandWaitCode = INVALIDATE;
 }
@@ -397,7 +397,7 @@ void MSI_Controller::handleBusRead(BusRequest* d) {
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
         // We've queued up a read command to that address...
         sawBusReadToMyIncomingAddress = true;
-        queueBusCommand(SHAREME, address);
+        queueMaxPriorityBusCommand(SHAREME, address);
     }
 }
 
