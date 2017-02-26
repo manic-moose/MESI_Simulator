@@ -81,8 +81,6 @@ void MSI_Controller::callActionFunction(void) {
 }
 
 void MSI_Controller::transitionState(void) {
-    //cout << getAddress() << " Transition  ";
-    //reportState();
     STATES nextState = getNextState();
     currentState = nextState;
     cout << getAddress() << " ";
@@ -247,7 +245,6 @@ void MSI_Controller::UpdateCacheLoad_Action(void) {
                 unsigned int setNumber      = evictedLine->getSetNumber();
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
-                cout << "0  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
@@ -319,7 +316,6 @@ void MSI_Controller::UpdateCacheStore_Action(void) {
                 unsigned int setNumber      = evictedLine->getSetNumber();
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
-                cout << "X  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
@@ -391,9 +387,7 @@ void MSI_Controller::handleBusRead(BusRequest* d) {
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
             queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
-            cout << "1 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
         } else if (cache->isModified(address)) {
-            cout << "4  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
         if (!cache->isShared(address)) {
@@ -418,9 +412,7 @@ void MSI_Controller::handleBusReadX(BusRequest* d) {
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
             queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
-            cout << "2 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
         } else if (cache->isModified(address)) {
-            cout << "5  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
         cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
@@ -428,7 +420,6 @@ void MSI_Controller::handleBusReadX(BusRequest* d) {
         assert(!cache->contains(address));
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
         // We've queued up a read command to that address...
-        cout << getAddress() << "Saw it here with address " << address << endl;
         sawBusReadXToMyIncomingAddress = true;
     }
 }
