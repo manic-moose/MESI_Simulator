@@ -78,9 +78,8 @@ private:
     void UpdateCacheStore_Action(void);
     
     // Broadcast a bus request with given command code and payload
-    void queueBusCommand(unsigned int command, unsigned int payload);
-    // Broadcast a bus request with given command code and payload
-    void queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx);
+    void queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx=BROADCAST_ADX);
+    void queueMaxPriorityBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx=BROADCAST_ADX);
     
     // Methods to handle incoming communications
     void handleBusRead(BusRequest* d);
@@ -89,6 +88,7 @@ private:
     void handleDataReturnMemory(BusRequest* d);
     void handleDataReturnProcessor(BusRequest* d);
     void handleInvalidate(BusRequest* d);
+    void handleShareMe(BusRequest* d);
     
     // Returns true if a bus read request was issued
     // to the given address.

@@ -248,7 +248,7 @@ void MSI_Controller::UpdateCacheLoad_Action(void) {
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
                 cout << "0  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
-                queueBusCommand(BUSWRITE,evictedLineAdx);
+                queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
         cache->insertLine(address);
@@ -256,9 +256,7 @@ void MSI_Controller::UpdateCacheLoad_Action(void) {
             cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
             cache->setShared(address);
         } else if (gotDataReturnFromBusRead_Memory) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
-            // This is the modification to make from MESI to MSI, in MESI, this would get updated
-            // to exclusive, but we just set it to shared here 
+            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_EXCLUSIVE  Payload: " << address << endl;
             cache->setShared(address);
         } else if (gotDataReturnFromBusRead_Processor) {
             cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
@@ -322,12 +320,13 @@ void MSI_Controller::UpdateCacheStore_Action(void) {
                 unsigned int tag            = evictedLine->getTag();
                 unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
                 cout << "X  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
-                queueBusCommand(BUSWRITE,evictedLineAdx);
+                queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
         cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
         cache->insertLine(address);   
         cache->setModified(address);
+        assert(cache->isModified(address));
     } else {
         if (!cache->isModified(address)) {
             cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
@@ -356,6 +355,24 @@ void MSI_Controller::acceptBusTransaction(BusRequest* d) {
         case INVALIDATE:
             handleInvalidate(d);
             break;
+        case NULL_BURST:
+            break;
+        case SHAREME:
+            handleShareMe(d);
+            break;
+    }
+}
+
+void MSI_Controller::handleShareMe(BusRequest* d) {
+    unsigned int address = d->payload;
+    if (cache->contains(address)) {
+        if (!cache->isShared(address)) {
+            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_0  Payload: " << address << endl;
+            cache->setShared(address);
+        }
+    } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
+        // Will cause transition to shared upon receiving data
+        sawBusReadToMyIncomingAddress = true;
     }
 }
 
@@ -377,15 +394,16 @@ void MSI_Controller::handleBusRead(BusRequest* d) {
             cout << "1 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
         } else if (cache->isModified(address)) {
             cout << "4  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
-            queueBusCommand(BUSWRITE, address);
+            queueMaxPriorityBusCommand(BUSWRITE, address);
         }
         if (!cache->isShared(address)) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED  Payload: " << address << endl;
+            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_1  Payload: " << address << endl;
         }
         cache->setShared(address);
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
         // We've queued up a read command to that address...
         sawBusReadToMyIncomingAddress = true;
+        queueBusCommand(SHAREME, address);
     }
 }
 
@@ -403,7 +421,7 @@ void MSI_Controller::handleBusReadX(BusRequest* d) {
             cout << "2 Issuing data return SELF: " << getAddress() << " ADRESS: " << address << endl;
         } else if (cache->isModified(address)) {
             cout << "5  BUSWRITE QUEUED. SELF: " << getAddress() << " ADDRESS: " << address << endl;
-            queueBusCommand(BUSWRITE, address);
+            queueMaxPriorityBusCommand(BUSWRITE, address);
         }
         cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
         cache->invalidate(address);
@@ -440,6 +458,7 @@ void MSI_Controller::handleDataReturnMemory(BusRequest* d) {
         awaitingBusRead                 = false;
         awaitingDataLocal               = false;
     }
+    cancelBusRequest(DATA_RETURN_PROCESSOR,address);
 }
 
 void MSI_Controller::handleDataReturnProcessor(BusRequest* d) {
@@ -466,7 +485,7 @@ void MSI_Controller::handleInvalidate(BusRequest* d) {
     unsigned int address = d->payload;
     if (cache->contains(address)) {
         if (cache->isModified(address)) {
-            queueBusCommand(BUSWRITE, address);   
+            queueMaxPriorityBusCommand(BUSWRITE, address);   
         }
         cout << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_1  Payload: " << address << endl;
         cache->invalidate(address);
@@ -476,15 +495,6 @@ void MSI_Controller::handleInvalidate(BusRequest* d) {
     }
 }
 
-void MSI_Controller::queueBusCommand(unsigned int command, unsigned int payload) {
-    BusRequest* r    = new BusRequest;
-    r->commandCode   = command;
-    r->payload       = cache->getLineAlignedAddress(payload);
-    r->targetAddress = BROADCAST_ADX;
-    r->sourceAddress = getAddress();
-    addNewBusRequest(r);
-}
-
 void MSI_Controller::queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
@@ -492,6 +502,15 @@ void MSI_Controller::queueBusCommand(unsigned int command, unsigned int payload,
     r->targetAddress = targetAdx;
     r->sourceAddress = getAddress();
     addNewBusRequest(r);
+}
+
+void MSI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+    BusRequest* r    = new BusRequest;
+    r->commandCode   = command;
+    r->payload       = cache->getLineAlignedAddress(payload);
+    r->targetAddress = targetAdx;
+    r->sourceAddress = getAddress();
+    addNewMaxPriorityBusRequest(r);
 }
 
 bool MSI_Controller::awaitingDataRemote(unsigned int address) {
