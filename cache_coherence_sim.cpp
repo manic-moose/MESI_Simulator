@@ -31,10 +31,11 @@ int main( int argc, char **argv ) {
     unsigned int num_procs      = 4;       // Number of processors to use
     unsigned int memory_latency = 50;      // Memory read latency
     unsigned int burst_length   = 8;       // Number of cycles a memory bus transfer takes
+    unsigned int controllerType = MESI_CONTROLLER_TYPE;
     
     // Get the file prefix. Should be the file name without the ".1", ".2", etc.
     do {
-      opt = getopt( argc, argv, "hf:m:p:l:b:" );
+      opt = getopt( argc, argv, "hf:m:p:l:b:c:" );
 
       switch( opt ) {
         case 'h':
@@ -44,6 +45,7 @@ int main( int argc, char **argv ) {
             cout << "  -l <value>  Set the memory read latency" << endl;
             cout << "  -b <value>  Set the burst length (number of cycles for bus data transfer)" << endl;
             cout << "  -f <prefix> Gives file prefix to use" << endl;
+            cout << "  -c <type>   Define controller type. Default is MESI. Use 0 for MESI, 1 for MSI, or 2 for MI" << endl;
             return -1;
             break;    
         case 'f':
@@ -79,6 +81,18 @@ int main( int argc, char **argv ) {
                 return -1;
             }
             break;
+       case 'c':
+            if (atoi(optarg) == 0) {
+                controllerType = MESI_CONTROLLER_TYPE;
+            } else if (atoi(optarg) == 1) {
+                controllerType = MSI_CONTROLLER_TYPE;
+            } else if (atoi(optarg) == 2) {
+                controllerType = MI_CONTROLLER_TYPE;
+            } else {
+                cout << "Illegal controller type. Use 0 for MESI (default), 1 for MSI, or 2 for MI." << endl;
+                return -1;
+            }
+            break;
         default:
         break;
       }
@@ -108,8 +122,22 @@ int main( int argc, char **argv ) {
       fileprefix[strlen(fileprefix)-1] = '\0'; // Delete end character
     }
     
+    cout << "Starting simulation with the following system parameters:" << endl;
+    cout << "  PROCESSOR COUNT : " << num_procs << endl;
+    if (controllerType == MESI_CONTROLLER_TYPE) {
+        cout << "  CONTROLLER TYPE : MESI" << endl;
+    } else if (controllerType == MSI_CONTROLLER_TYPE) {
+        cout << "  CONTROLLER TYPE : MSI" << endl;
+    } else if (controllerType == MI_CONTROLLER_TYPE) {
+        cout << "  CONTROLLER TYPE : MI" << endl;
+    }
+    cout << "  MEMORY LATENCY  : " << memory_latency << endl;
+    cout << "  BURST LENGTH    : " << burst_length << endl;
+    cout << "  MAX CYCLES      : " << max_ticks << endl;
+    cout << "#######################################################################################################" << endl << endl;
+    
     // Instantiate the system with system parameters parameters
-    System* s = new System(num_procs, MESI_CONTROLLER_TYPE, memory_latency, burst_length);
+    System* s = new System(num_procs, controllerType, memory_latency, burst_length);
     unsigned long long int tickCount = 0;
     while(tickCount++ <= max_ticks) {
         // Make sure we have not reached EOF on any of our files
