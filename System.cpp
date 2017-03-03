@@ -72,5 +72,6 @@ void System::reportMemoryOpStatistics(void) {
     cout << "    Total Combined Hits     : " << totalHits << endl;
     cout << "    Total Combined Misses   : " << totalMisses << endl;
     cout << "    Combined Hit Rate       : " << finalHitRate << "%" << endl;
+    cout << "    Bus Busy Cycles         : " << interconnect->getBusyCycles() << endl;
     //interconnect->reportBusStatistics();
 }

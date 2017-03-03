@@ -5,6 +5,7 @@
 void Interconnect::Tick(void) {
     if (nodeLocked) {
         serviceBusNode(lockedAddress);
+        busyCycles++;
     } else {
         serviceBusNodes();
     }
@@ -44,6 +45,7 @@ void Interconnect::serviceBusNodes(void) {
         // Only handle a single bus communication in each service
         // cycle (one per clock tick)
         if (serviceBusNode(address)) {
+            busyCycles++;
             return;
         }
     }
@@ -130,4 +132,8 @@ bool Interconnect::hasNode(unsigned int address) {
 BusNode* Interconnect::getNode(unsigned int address) {
     assert(hasNode(address));
     return nodes[address];
+}
+
+unsigned long Interconnect::getBusyCycles(void) {
+    return busyCycles;   
 }

@@ -17,6 +17,7 @@ public:
         priorityQueue = new vector<unsigned int>;
         nodeLocked = false;
         lockedAddress = 0;
+        busyCycles = 0;
     }
     
     // External Event Inputs
@@ -29,11 +30,14 @@ public:
     unsigned int getNodeCount(void);
     
     void reportBusStatistics(void);
+    unsigned long getBusyCycles(void);
     
 private:
     
     bool nodeLocked;
     unsigned int lockedAddress;
+    
+    unsigned long busyCycles;
     
     // Some statistical data collection variables
     unsigned long numTicks;
