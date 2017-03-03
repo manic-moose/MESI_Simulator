@@ -2,11 +2,7 @@
 #define MSI_Controller_H
 
 #include "CacheController.h"
-
-#define ADX_LEN 64
-#define NUM_SETS 1024
-#define LINES_PER_SET 4
-#define BYTES_PER_LINE 32
+#include "CacheParams.h"
 
 using namespace std;
 

@@ -1,0 +1,9 @@
+#ifndef CACHEPARAMS_H
+#define CACHEPARAMS_H
+
+#define ADX_LEN 64
+#define NUM_SETS 1024
+#define LINES_PER_SET 4
+#define BYTES_PER_LINE 32
+
+#endif //CACHE_PARAMS_H
