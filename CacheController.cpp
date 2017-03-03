@@ -212,3 +212,19 @@ void CacheController::cancelBusRequest(unsigned int commandCode, unsigned long l
         }
     }
 }
+
+unsigned long CacheController::getStoreHits(void) {
+    return store_hits;    
+}
+
+unsigned long CacheController::getStoreMisses(void) {
+    return store_misses;
+}
+
+unsigned long CacheController::getLoadHits(void) {
+    return load_hits;
+}
+
+unsigned long CacheController::getLoadMisses(void) {
+    return load_misses;
+}

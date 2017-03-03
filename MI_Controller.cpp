@@ -105,8 +105,10 @@ MI_Controller::STATES MI_Controller::CheckCacheLoad_Transition(void) {
         // Cache Hit - Line must be in one of M, E, or S. Since
         // this is only a load, the cache line state does not
         // need to be updated except for LRU.
+        load_hits++;
         return UPDATE_CACHE_LD_STATE;
     } else {
+        load_misses++;
         // Cache Miss - a Bus read will need to be issued.
         return ISSUE_READ_STATE;
     }
@@ -128,6 +130,7 @@ MI_Controller::STATES MI_Controller::UpdateCacheLoad_Transition(void) {
 MI_Controller::STATES MI_Controller::CheckCacheStore_Transition(void) {
     unsigned long long address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
+        store_hits++;
         // This item is in the cache - need to check MESI bits to determine
         // next state.
         
@@ -142,6 +145,7 @@ MI_Controller::STATES MI_Controller::CheckCacheStore_Transition(void) {
         assert(isModified && !isShared && !isExclusive);
         return UPDATE_CACHE_ST_STATE;
     } else {
+        store_misses+;
         // Cache state is invalid, need to issue a READX (read exclusive)
         return ISSUE_READX_STATE;
     }

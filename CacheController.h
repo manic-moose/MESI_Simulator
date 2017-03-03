@@ -27,6 +27,10 @@ public:
         burstLen = burstLength;
         burstCounter = 0;
         bursting = false;
+        load_hits = 0;
+        load_misses = 0;
+        store_hits = 0;
+        store_misses = 0;
     }
     
     // Function to handle LOAD or STORE commands from the processor
@@ -52,7 +56,18 @@ public:
     virtual void callActionFunction(void) =0;
     virtual void transitionState(void) =0;
     
+    unsigned long getStoreHits(void);
+    unsigned long getStoreMisses(void);
+    unsigned long getLoadHits(void);
+    unsigned long getLoadMisses(void);
+    
 protected:
+    
+    // For data collection
+    unsigned long load_hits;
+    unsigned long load_misses;
+    unsigned long store_hits;
+    unsigned long store_misses;
     
     // The cache the controller interfaces to
     Cache* cache;
