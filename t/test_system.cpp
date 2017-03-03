@@ -11,7 +11,7 @@ int main(void) {
     srand(time(NULL));
     
     // Instantiate the system with system parameters parameters
-    System* s = new System(NUM_PROCESSORS, MESI_CONTROLLER_TYPE, MEMORY_LATENCY);
+    System* s = new System(NUM_PROCESSORS, MI_CONTROLLER_TYPE, MEMORY_LATENCY);
     
     // Create simulation loop. We could base this on a fixed number of ticks
     // or loop until whatever the source of the instructions are is done.

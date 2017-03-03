@@ -7,7 +7,7 @@
 #include <cassert>
 #include <unistd.h>
 
-#define NUM_PROCESSORS 8
+#define NUM_PROCESSORS 4
 #define MEMORY_LATENCY 100
 
 int main( int argc, char **argv ) {
@@ -93,8 +93,8 @@ int main( int argc, char **argv ) {
             // instruction finishes.
             if (!(s->hasPendingInstructions(pNum))) {
                 // Read in new instruction from file
- 	        fscanf( myfiles[pNum], "%llx %c\n", &nextaddress, &nextop );
-		assert( nextop == 'r' || nextop == 'w' );
+ 	            fscanf( myfiles[pNum], "%llx %c\n", &nextaddress, &nextop );
+		        assert( nextop == 'r' || nextop == 'w' );
 	      
                 Instruction* inst = new Instruction;
                 inst->OPCODE  = (nextop == 'r') ? 0 : 1;
