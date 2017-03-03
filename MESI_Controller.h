@@ -96,7 +96,7 @@ private:
     
 public:
     
-    MESI_Controller() : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {
+    MESI_Controller(unsigned int burst_len) : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE,burst_len) {
         gotDataReturnFromBusRead_Memory    = false;
         gotDataReturnFromBusRead_Processor = false;
         queuedBusRead                      = false;

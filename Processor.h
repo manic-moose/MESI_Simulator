@@ -61,14 +61,14 @@ private:
 
 
 public:
-    Processor(unsigned int controllerType) {
+    Processor(unsigned int controllerType, unsigned int burstLen) {
         instrQueue = new queue<Instruction*>;
         if (controllerType == MI_CONTROLLER_TYPE) {
-            cacheController = new MI_Controller;
+            cacheController = new MI_Controller(burstLen);
         } else if (controllerType == MSI_CONTROLLER_TYPE) {
-            cacheController = new MSI_Controller;
+            cacheController = new MSI_Controller(burstLen);
         } else if (controllerType == MESI_CONTROLLER_TYPE) {
-            cacheController = new MESI_Controller;
+            cacheController = new MESI_Controller(burstLen);
         } else {
             cout << "Invalid controller type. Must be one of MI_CONTROLLER_TYPE, MSI_CONTROLLER_TYPE, or MESI_CONTROLLER_TYPE." << endl;
         }

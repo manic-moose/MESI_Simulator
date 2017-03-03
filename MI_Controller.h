@@ -88,7 +88,7 @@ private:
     
 public:
     
-    MI_Controller() : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE) {
+    MI_Controller(unsigned int burstLen) : CacheController(ADX_LEN,NUM_SETS,LINES_PER_SET,BYTES_PER_LINE,burstLen) {
         gotDataReturnFromBusRead_Memory    = false;
         gotDataReturnFromBusRead_Processor = false;
         queuedBusRead                      = false;
