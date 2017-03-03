@@ -44,6 +44,7 @@ int main( int argc, char **argv ) {
             cout << "  -m <value>  Set the max number of simulation cycles" << endl;
             cout << "  -l <value>  Set the memory read latency" << endl;
             cout << "  -b <value>  Set the burst length (number of cycles for bus data transfer)" << endl;
+            cout << "  -p <value>  Set the number of processors to simulate. Must have equal number of trace files as inputs." << endl;
             cout << "  -f <prefix> Gives file prefix to use" << endl;
             cout << "  -c <type>   Define controller type. Default is MESI. Use 0 for MESI, 1 for MSI, or 2 for MI" << endl;
             return -1;
