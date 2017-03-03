@@ -145,7 +145,7 @@ MI_Controller::STATES MI_Controller::CheckCacheStore_Transition(void) {
         assert(isModified && !isShared && !isExclusive);
         return UPDATE_CACHE_ST_STATE;
     } else {
-        store_misses+;
+        store_misses++;
         // Cache state is invalid, need to issue a READX (read exclusive)
         return ISSUE_READX_STATE;
     }

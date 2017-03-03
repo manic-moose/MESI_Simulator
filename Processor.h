@@ -111,5 +111,10 @@ public:
     
     double getAverageMemoryLatency(void);
     
+    unsigned long getStoreHits(void);
+    unsigned long getStoreMisses(void);
+    unsigned long getLoadHits(void);
+    unsigned long getLoadMisses(void);
+    
 };
 #endif //PROCESSOR_H

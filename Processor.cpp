@@ -189,3 +189,18 @@ bool Processor::requestsMaxPriority(void) {
     return cacheController->requestsMaxPriority();
 }
 
+unsigned long Processor::getStoreHits(void) {
+    return cacheController->getStoreHits();
+}
+
+unsigned long Processor::getStoreMisses(void) {
+    return cacheController->getStoreMisses();
+}
+
+unsigned long Processor::getLoadHits(void) {
+    return cacheController->getLoadHits();
+}
+
+unsigned long Processor::getLoadMisses(void) {
+    return cacheController->getLoadMisses();
+}
