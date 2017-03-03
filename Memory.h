@@ -9,7 +9,7 @@ using namespace std;
 class Memory : public BusNode {
     
     struct MemoryOperation {
-        unsigned int address;
+        unsigned long long address;
         unsigned int age;
         unsigned int returnAddress;
     };

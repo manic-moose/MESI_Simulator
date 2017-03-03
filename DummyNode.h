@@ -16,7 +16,7 @@ public:
     bool requestsTransaction(void);
     bool requestsLock(void);
     
-    void sendNewTransaction(unsigned int adx, unsigned int code, unsigned int payload);
+    void sendNewTransaction(unsigned int adx, unsigned int code, unsigned long long payload);
     
     void setRequestsLock(bool l);
     

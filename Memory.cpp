@@ -11,7 +11,7 @@ void Memory::acceptBusTransaction(BusRequest* d) {
         memTracker->push_back(o);
     } else if (d->commandCode == DATA_RETURN_PROCESSOR || d->commandCode == BUSWRITE) {
         // Need to cancel a currently pending memory op for this
-        unsigned int payloadValue = d->payload;
+        unsigned long long payloadValue = d->payload;
         for (unsigned int i = 0; i < memTracker->size(); i++) {
             MemoryOperation* p = memTracker->at(i);
             if (p->address == payloadValue) {
@@ -86,7 +86,7 @@ void Memory::queueDataReturns(void) {
         MemoryOperation* p = memTracker->at(oldestIdx);
         unsigned int oldestAge = p->age;
         if (oldestAge >= readLatency) {
-            unsigned int adx = p->address;
+            unsigned long long adx = p->address;
             // This read operation is ready to send
             BusRequest* dataReturn    = new BusRequest;
             dataReturn->commandCode   = DATA_RETURN_MEMORY;

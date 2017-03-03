@@ -41,7 +41,7 @@ public:
      * @return Returns an address that is derived from the tag and set
      *         number.
      */
-    unsigned int getAddress(unsigned int setNum, unsigned int tag);
+    unsigned long long getAddress(unsigned int setNum, unsigned long long tag);
     
     /* getLineAlignedAddress - Given an address, returns the
      * memory address that corresponds to the beginning of
@@ -50,7 +50,7 @@ public:
      *          The non-line aligned address
      * @return Returns the line aligned memory address
      */
-    unsigned int getLineAlignedAddress(unsigned int adx);
+    unsigned long long getLineAlignedAddress(unsigned long long adx);
     
     /* getTagSize - Get the width of the tag
      * @return Returns the number of bits
@@ -70,7 +70,7 @@ public:
      *          The address being checked
      * @return Returns which set the address falls into.
      */
-    unsigned int getAdxSetNum (unsigned int adx);
+    unsigned int getAdxSetNum (unsigned long long adx);
     
     /* @c getTag - Get the tag associated with an address
      * @param unsigned int adx
@@ -78,7 +78,7 @@ public:
      * @return Returns the value of the tag
      *         extracted from adx
      */
-    unsigned int getTag (unsigned int adx);
+    unsigned long long getTag (unsigned long long adx);
     
     /* @c contains - Returns true of the cache contains
      * the data at address
@@ -87,7 +87,7 @@ public:
      * @return Returns true if the cache holds
      *         this addresses data, false otherwise.
      */
-    bool contains(unsigned int adx);
+    bool contains(unsigned long long adx);
     
     /* @c invalidate - Invalidates the cache line
      * at address adx, if present
@@ -97,7 +97,7 @@ public:
      *         be invalidated, otherwise nothing occurs.
      *         A pointer to the CacheLine is returned.
      */
-    CacheLine* invalidate(unsigned int adx);
+    CacheLine* invalidate(unsigned long long adx);
     
     /* @c isFull - Checks if the set associated with the
      *             given address is full or not
@@ -106,7 +106,7 @@ public:
      * @return Returns true if the set has no invalid lines
      *         available, false otherwise.
      */
-    bool isFull(unsigned int adx);
+    bool isFull(unsigned long long adx);
     
     /* @c evictLineInSet - Invalidates a line
      * in the cache in the set mapped to by adx.
@@ -120,7 +120,7 @@ public:
      *         to stream the data back to memory if needed.
      *         NULL is returned if no line was evicted.
      */
-    CacheLine* evictLineInSet(unsigned int adx);
+    CacheLine* evictLineInSet(unsigned long long adx);
 
     /* @c insertLine - Adds a line to the set
      * that adx belongs to.
@@ -130,7 +130,7 @@ public:
      * @result Set will be filled with line. Assumes
      *         there is space in the set.
      */
-    void insertLine(unsigned int adx);
+    void insertLine(unsigned long long adx);
     
     /* @c updateLRU - Updates the lru bits for the cache line
      *                at the given address.
@@ -139,7 +139,7 @@ public:
      * @result LRU bits will be updated, making the line
      *         mapped to by adx the most recent to be used
      */
-    void updateLRU(unsigned int adx);
+    void updateLRU(unsigned long long adx);
         
         
     
@@ -150,17 +150,17 @@ public:
      * @return Returns true if 1 valid, clean line exists,
                false otherwise
      */
-    bool hasCleanLines(unsigned int adx);
+    bool hasCleanLines(unsigned long long adx);
     
     // MESI Accessor and Modifiers
-    bool isExclusive(unsigned int adx);
-    bool isModified(unsigned int adx);
-    bool isShared(unsigned int adx);
-    bool isInvalid(unsigned int adx);
-    void setExclusive(unsigned int adx);
-    void setModified(unsigned int adx);
-    void setShared(unsigned int adx);
-    void setInvalid(unsigned int adx);
+    bool isExclusive(unsigned long long adx);
+    bool isModified(unsigned long long adx);
+    bool isShared(unsigned long long adx);
+    bool isInvalid(unsigned long long adx);
+    void setExclusive(unsigned long long adx);
+    void setModified(unsigned long long adx);
+    void setShared(unsigned long long adx);
+    void setInvalid(unsigned long long adx);
 
 };
 

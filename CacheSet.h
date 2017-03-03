@@ -42,7 +42,7 @@ private:
     * @result All status and control bits for the
     *         set are updated.
     */
-   void streamIn (CacheLine* line, unsigned int tag);
+   void streamIn (CacheLine* line, unsigned long long tag);
     
     /* @c updateLRU - Updates the LRU bits for each line
      * in the set.
@@ -51,7 +51,7 @@ private:
      * @result Will update the LRU bits, with the parameter line
      * being the newest use in the set.
      */
-    void updateLRU(unsigned int tag);
+    void updateLRU(unsigned long long tag);
     
     /* @c updateLRU - Updates the LRU bits for each line
      * in the set.
@@ -68,7 +68,7 @@ private:
      * @result Will return true if this set contains the tag
      *         and false otherwise
      */
-    bool contains(unsigned int tag);
+    bool contains(unsigned long long tag);
     
     /* @c evict - Selects a line for eviction and invalidates it
      * @result Line will be selected using LRU policy and evicted.
@@ -91,7 +91,7 @@ private:
      * @result The selected line will be invalidated. Returns
      *         a pointer to the line.
      */
-    CacheLine* invalidate(unsigned int tag);
+    CacheLine* invalidate(unsigned long long tag);
     
     /* @c invalidate - Invalidates the line with the given tag
      * @param line
@@ -107,7 +107,7 @@ private:
      * @returns Returns associated line or fatal error
      *          if line is not present
      */
-    CacheLine* getLine(unsigned int tag);
+    CacheLine* getLine(unsigned long long tag);
     
     /* checkAndFixLRU - Verifies that the LRU bits
      * for valid lines are monotonically increasing
@@ -144,17 +144,17 @@ private:
 
     CacheLine* getEmptyLine(void);
 
-    void insertLine(unsigned int tag);
+    void insertLine(unsigned long long tag);
     
     // MESI Accessor and Modifiers
-    bool isExclusive(unsigned int tag);
-    bool isModified(unsigned int tag);
-    bool isShared(unsigned int tag);
-    bool isInvalid(unsigned int tag);
-    void setExclusive(unsigned int tag);
-    void setModified(unsigned int tag);
-    void setShared(unsigned int tag);
-    void setInvalid(unsigned int tag);
+    bool isExclusive(unsigned long long tag);
+    bool isModified(unsigned long long tag);
+    bool isShared(unsigned long long tag);
+    bool isInvalid(unsigned long long tag);
+    void setExclusive(unsigned long long tag);
+    void setModified(unsigned long long tag);
+    void setShared(unsigned long long tag);
+    void setInvalid(unsigned long long tag);
 
 };
 #endif //CACHESET_H

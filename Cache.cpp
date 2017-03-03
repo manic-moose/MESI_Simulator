@@ -32,136 +32,136 @@ unsigned int Cache::getLRUSize (void) {
     return lruSize;
 }
 
-unsigned int Cache::getAdxSetNum (unsigned int adx) {
+unsigned int Cache::getAdxSetNum (unsigned long long adx) {
     adx = adx >> paragraphBitSize;
     return adx & setBitMask;
 }
 
-unsigned int Cache::getLineAlignedAddress(unsigned int adx) {
+unsigned long long Cache::getLineAlignedAddress(unsigned long long adx) {
     return getAddress(getAdxSetNum(adx),getTag(adx));
 }
 
-unsigned int Cache::getTag (unsigned int adx) {
+unsigned long long Cache::getTag (unsigned long long adx) {
     return (adx >> (addressLen - tagSize));
 }
 
-unsigned int Cache::getAddress(unsigned int setNum, unsigned int tag) {
-    unsigned int adx;
+unsigned long long Cache::getAddress(unsigned int setNum, unsigned long long tag) {
+    unsigned long long adx;
     adx = (setNum << paragraphBitSize) | (tag << (addressLen - tagSize));
     return adx;
 }
 
-CacheLine* Cache::evictLineInSet(unsigned int adx) {
+CacheLine* Cache::evictLineInSet(unsigned long long adx) {
     unsigned int setNumber = getAdxSetNum(adx);
     CacheSet* set = setArry.at(setNumber);
     CacheLine* line = set->evict();
     return line;
 }
 
-bool Cache::isFull(unsigned int adx) {
+bool Cache::isFull(unsigned long long adx) {
     unsigned int setNumber = getAdxSetNum(adx);
     CacheSet* set = setArry.at(setNumber);
     return set->isFull();
 }
 
-bool Cache::hasCleanLines(unsigned int adx) {
+bool Cache::hasCleanLines(unsigned long long adx) {
     unsigned int setNumber = getAdxSetNum(adx);
     CacheSet* set = setArry.at(setNumber);
     return set->hasCleanLines();
 }
 
-bool Cache::contains(unsigned int adx) {
+bool Cache::contains(unsigned long long adx) {
     unsigned int setNumber = getAdxSetNum(adx);
     unsigned int tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     return set->CacheSet::contains(tag);
 }
 
-CacheLine* Cache::invalidate(unsigned int adx) {
+CacheLine* Cache::invalidate(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     return set->invalidate(tag);
 }
 
 // MESI Accessor and Modifiers
-bool Cache::isExclusive(unsigned int adx) {
+bool Cache::isExclusive(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     return set->isExclusive(tag);
 }
 
-bool Cache::isModified(unsigned int adx) {
+bool Cache::isModified(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     return set->isModified(tag);
 }
 
-bool Cache::isShared(unsigned int adx) {
+bool Cache::isShared(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     return set->isShared(tag);
 }
 
-bool Cache::isInvalid(unsigned int adx) {
+bool Cache::isInvalid(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     return set->isInvalid(tag);
 }
 
-void Cache::setExclusive(unsigned int adx) {
+void Cache::setExclusive(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     set->setExclusive(tag);
 }
 
-void Cache::setModified(unsigned int adx) {
+void Cache::setModified(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     set->setModified(tag);
 }
 
-void Cache::setShared(unsigned int adx) {
+void Cache::setShared(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     set->setShared(tag);
 }
 
-void Cache::setInvalid(unsigned int adx) {
+void Cache::setInvalid(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     set->setInvalid(tag);
 }
 
-void Cache::insertLine(unsigned int adx) {
+void Cache::insertLine(unsigned long long adx) {
     assert(!isFull(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     set->insertLine(tag);
 }
 
-void Cache::updateLRU(unsigned int adx) {
+void Cache::updateLRU(unsigned long long adx) {
     assert(contains(adx));
     unsigned int setNumber = getAdxSetNum(adx);
-    unsigned int tag = getTag(adx);
+    unsigned long long tag = getTag(adx);
     CacheSet* set = setArry.at(setNumber);
     set->updateLRU(tag);
 }

@@ -100,7 +100,7 @@ MI_Controller::STATES MI_Controller::Idle_Transition(void) {
 }
 
 MI_Controller::STATES MI_Controller::CheckCacheLoad_Transition(void) {
-    unsigned int address = currentInstruction->ADDRESS;
+    unsigned long long address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
         // Cache Hit - Line must be in one of M, E, or S. Since
         // this is only a load, the cache line state does not
@@ -126,7 +126,7 @@ MI_Controller::STATES MI_Controller::UpdateCacheLoad_Transition(void) {
 }
 
 MI_Controller::STATES MI_Controller::CheckCacheStore_Transition(void) {
-    unsigned int address = currentInstruction->ADDRESS;
+    unsigned long long address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
         // This item is in the cache - need to check MESI bits to determine
         // next state.
@@ -182,7 +182,7 @@ void MI_Controller::IssueRead_Action(void) {
         // If we have done so yet in this state, queue the bus read,
         // otherwise, we just wait in the state without performing any
         // action
-        unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+        unsigned long long address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
         queueBusCommand(BUSREADX, address);
         queuedBusRead = true;
         awaitingDataLocal = true;
@@ -197,7 +197,7 @@ void MI_Controller::UpdateCacheLoad_Action(void) {
     // from a cache-to-cache transfer, then we know
     // that at least one other cache contains
     // a copy of the shared data.
-    unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    unsigned long long address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     if (sawBusReadXToMyIncomingAddress) {
         // While waiting for data, observed a bus request for the same address.
         // Rather than updating the cache, the data would just be forwarded to the
@@ -214,8 +214,8 @@ void MI_Controller::UpdateCacheLoad_Action(void) {
             if (evictedLine->isModified()) {
                 // Evicted line is modified, so time to write back out
                 unsigned int setNumber      = evictedLine->getSetNumber();
-                unsigned int tag            = evictedLine->getTag();
-                unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                unsigned long long tag            = evictedLine->getTag();
+                unsigned long long evictedLineAdx = cache->getAddress(setNumber, tag);
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
@@ -237,7 +237,7 @@ void MI_Controller::IssueReadX_Action(void) {
     if (!queuedBusRead) {
         // If we have done so yet in this state, queue the bus read,
         // otherwise, we just wait in the state without performing any action
-        unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+        unsigned long long address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
         queueBusCommand(BUSREADX, address);
         queuedBusRead = true;
         awaitingDataLocal = true;
@@ -248,7 +248,7 @@ void MI_Controller::IssueReadX_Action(void) {
 void MI_Controller::UpdateCacheStore_Action(void) {
     // In this state, the cache line is being updated
     // to MODIFIED.
-    unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    unsigned long long address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     if (sawBusReadToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
         // Saw an operation to this address while waiting for data to return. Instead of updating the cache,
         // a write request is issued to memory immediately. No actionst to take here
@@ -262,8 +262,8 @@ void MI_Controller::UpdateCacheStore_Action(void) {
             if (evictedLine->isModified()) {
                 // Evicted line is modified, so time to write back out
                 unsigned int setNumber      = evictedLine->getSetNumber();
-                unsigned int tag            = evictedLine->getTag();
-                unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                unsigned long long tag            = evictedLine->getTag();
+                unsigned long long evictedLineAdx = cache->getAddress(setNumber, tag);
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
@@ -312,7 +312,7 @@ void MI_Controller::handleBusRead(BusRequest* d) {
     // means another processor beat this one, and we should cancel
     // the bus request. After the DATA_RETURN_PROCESSOR or BUSWRITE is issued,
     // the cache line should be updated to the shared state.
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     cout << "Detected Illegal Bus Command (all bus commands in MI should be exclusive)" << endl;
     assert(0);
     if (cache->contains(address)) {
@@ -338,7 +338,7 @@ void MI_Controller::handleBusReadX(BusRequest* d) {
     // DATA_RETURN_PROCESSOR to perform a cache to cache transfer.
     // After any required issues are complete, the line must be transitioned.
     // to invalid.
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
             queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
@@ -360,7 +360,7 @@ void MI_Controller::handleBusWrite(BusRequest* d) {
     // a BUSWRITE, it is safe to assume that this cache does not contain the line
     // and can ignore this. assert that this data is not present in our cache
     // just to help catch bugs
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (awaitingDataRemote(address)) {
         snoopedDataReturnFromWriteback = true;
         awaitingBusRead                = false;
@@ -373,7 +373,7 @@ void MI_Controller::handleBusWrite(BusRequest* d) {
 }
 
 void MI_Controller::handleDataReturnMemory(BusRequest* d) {
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (awaitingDataRemote(address)) {
         gotDataReturnFromBusRead_Memory = true;
         awaitingBusRead                 = false;
@@ -386,7 +386,7 @@ void MI_Controller::handleDataReturnProcessor(BusRequest* d) {
     // If we've previously queued a DATA_RETURN_PROCESSOR to the same
     // address, we should cancel this request since it was serviced by
     // another cache controller
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (awaitingDataRemote(address)) {
         gotDataReturnFromBusRead_Processor = true;
         awaitingBusRead                    = false;
@@ -395,7 +395,7 @@ void MI_Controller::handleDataReturnProcessor(BusRequest* d) {
     cancelBusRequest(DATA_RETURN_PROCESSOR,address);
 }
 
-void MI_Controller::queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+void MI_Controller::queueBusCommand(unsigned int command, unsigned long long payload, unsigned int targetAdx) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
     r->payload       = cache->getLineAlignedAddress(payload);
@@ -404,7 +404,7 @@ void MI_Controller::queueBusCommand(unsigned int command, unsigned int payload, 
     addNewBusRequest(r);
 }
 
-void MI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+void MI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned long long payload, unsigned int targetAdx) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
     r->payload       = cache->getLineAlignedAddress(payload);
@@ -413,7 +413,7 @@ void MI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned in
     addNewMaxPriorityBusRequest(r);
 }
 
-bool MI_Controller::awaitingDataRemote(unsigned int address) {
+bool MI_Controller::awaitingDataRemote(unsigned long long address) {
     assert(dispatchedBusRead != NULL);
     return (((cache->getLineAlignedAddress(currentInstruction->ADDRESS)) == address) && awaitingBusRead);
 }

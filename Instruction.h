@@ -7,7 +7,7 @@
 
 struct Instruction {
     unsigned int OPCODE;
-    unsigned int ADDRESS;
+    unsigned long long ADDRESS;
 };
 
 #endif //INSTRUCTION_H

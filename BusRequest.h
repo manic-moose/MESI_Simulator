@@ -5,7 +5,7 @@ struct BusRequest {
     unsigned int commandCode;
     unsigned int targetAddress;
     unsigned int sourceAddress;
-    unsigned int payload;
+    unsigned long long payload;
 };
 
 #endif //BUSREQUEST_H

@@ -106,7 +106,7 @@ MSI_Controller::STATES MSI_Controller::Idle_Transition(void) {
 }
 
 MSI_Controller::STATES MSI_Controller::CheckCacheLoad_Transition(void) {
-    unsigned int address = currentInstruction->ADDRESS;
+    unsigned long long address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
         // Cache Hit - Line must be in one of M, E, or S. Since
         // this is only a load, the cache line state does not
@@ -132,7 +132,7 @@ MSI_Controller::STATES MSI_Controller::UpdateCacheLoad_Transition(void) {
 }
 
 MSI_Controller::STATES MSI_Controller::CheckCacheStore_Transition(void) {
-    unsigned int address = currentInstruction->ADDRESS;
+    unsigned long long address = currentInstruction->ADDRESS;
     if (cache->contains(address)) {
         // This item is in the cache - need to check MESI bits to determine
         // next state.
@@ -211,7 +211,7 @@ void MSI_Controller::IssueRead_Action(void) {
         // If we have done so yet in this state, queue the bus read,
         // otherwise, we just wait in the state without performing any
         // action
-        unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+        unsigned long long address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
         queueBusCommand(BUSREAD, address);
         queuedBusRead = true;
         awaitingDataLocal = true;
@@ -226,7 +226,7 @@ void MSI_Controller::UpdateCacheLoad_Action(void) {
     // from a cache-to-cache transfer, then we know
     // that at least one other cache contains
     // a copy of the shared data.
-    unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    unsigned long long address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     if (sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
         // While waiting for data, observed a bus request for the same address.
         // Rather than updating the cache, the data would just be forwarded to the
@@ -243,8 +243,8 @@ void MSI_Controller::UpdateCacheLoad_Action(void) {
             if (evictedLine->isModified()) {
                 // Evicted line is modified, so time to write back out
                 unsigned int setNumber      = evictedLine->getSetNumber();
-                unsigned int tag            = evictedLine->getTag();
-                unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                unsigned long long tag            = evictedLine->getTag();
+                unsigned long long evictedLineAdx = cache->getAddress(setNumber, tag);
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
@@ -278,7 +278,7 @@ void MSI_Controller::IssueReadX_Action(void) {
     if (!queuedBusRead) {
         // If we have done so yet in this state, queue the bus read,
         // otherwise, we just wait in the state without performing any action
-        unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+        unsigned long long address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
         queueBusCommand(BUSREADX, address);
         queuedBusRead = true;
         awaitingDataLocal = true;
@@ -287,7 +287,7 @@ void MSI_Controller::IssueReadX_Action(void) {
 }
 
 void MSI_Controller::IssueInvalidate_Action(void) {
-    unsigned int address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    unsigned long long address       = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     queueMaxPriorityBusCommand(INVALIDATE,address);
     outgoingCommandWaitFlag = true;
     outgoingCommandWaitCode = INVALIDATE;
@@ -300,7 +300,7 @@ void MSI_Controller::InvalidateWait_Action(void) {
 void MSI_Controller::UpdateCacheStore_Action(void) {
     // In this state, the cache line is being updated
     // to MODIFIED.
-    unsigned int address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
+    unsigned long long address = cache->getLineAlignedAddress(currentInstruction->ADDRESS);
     if (sawBusReadToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
         // Saw an operation to this address while waiting for data to return. Instead of updating the cache,
         // a write request is issued to memory immediately. No actionst to take here
@@ -314,8 +314,8 @@ void MSI_Controller::UpdateCacheStore_Action(void) {
             if (evictedLine->isModified()) {
                 // Evicted line is modified, so time to write back out
                 unsigned int setNumber      = evictedLine->getSetNumber();
-                unsigned int tag            = evictedLine->getTag();
-                unsigned int evictedLineAdx = cache->getAddress(setNumber, tag);
+                unsigned long long tag            = evictedLine->getTag();
+                unsigned long long evictedLineAdx = cache->getAddress(setNumber, tag);
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
@@ -360,7 +360,7 @@ void MSI_Controller::acceptBusTransaction(BusRequest* d) {
 }
 
 void MSI_Controller::handleShareMe(BusRequest* d) {
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (!cache->isShared(address)) {
             cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_0  Payload: " << address << endl;
@@ -383,7 +383,7 @@ void MSI_Controller::handleBusRead(BusRequest* d) {
     // means another processor beat this one, and we should cancel
     // the bus request. After the DATA_RETURN_PROCESSOR or BUSWRITE is issued,
     // the cache line should be updated to the shared state.
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
             queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
@@ -408,7 +408,7 @@ void MSI_Controller::handleBusReadX(BusRequest* d) {
     // DATA_RETURN_PROCESSOR to perform a cache to cache transfer.
     // After any required issues are complete, the line must be transitioned.
     // to invalid.
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
             queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
@@ -430,7 +430,7 @@ void MSI_Controller::handleBusWrite(BusRequest* d) {
     // a BUSWRITE, it is safe to assume that this cache does not contain the line
     // and can ignore this. assert that this data is not present in our cache
     // just to help catch bugs
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (awaitingDataRemote(address)) {
         snoopedDataReturnFromWriteback = true;
         awaitingBusRead                = false;
@@ -443,7 +443,7 @@ void MSI_Controller::handleBusWrite(BusRequest* d) {
 }
 
 void MSI_Controller::handleDataReturnMemory(BusRequest* d) {
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (awaitingDataRemote(address)) {
         gotDataReturnFromBusRead_Memory = true;
         awaitingBusRead                 = false;
@@ -456,7 +456,7 @@ void MSI_Controller::handleDataReturnProcessor(BusRequest* d) {
     // If we've previously queued a DATA_RETURN_PROCESSOR to the same
     // address, we should cancel this request since it was serviced by
     // another cache controller
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (awaitingDataRemote(address)) {
         gotDataReturnFromBusRead_Processor = true;
         awaitingBusRead                    = false;
@@ -473,7 +473,7 @@ void MSI_Controller::handleInvalidate(BusRequest* d) {
     // to an address that is in the SHARED state (which by definition
     // means no modified copies exist). Assert that our line
     // is not modified and invalidate the copy if it exists.
-    unsigned int address = d->payload;
+    unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);   
@@ -486,7 +486,7 @@ void MSI_Controller::handleInvalidate(BusRequest* d) {
     }
 }
 
-void MSI_Controller::queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+void MSI_Controller::queueBusCommand(unsigned int command, unsigned long long payload, unsigned int targetAdx) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
     r->payload       = cache->getLineAlignedAddress(payload);
@@ -495,7 +495,7 @@ void MSI_Controller::queueBusCommand(unsigned int command, unsigned int payload,
     addNewBusRequest(r);
 }
 
-void MSI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx) {
+void MSI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned long long payload, unsigned int targetAdx) {
     BusRequest* r    = new BusRequest;
     r->commandCode   = command;
     r->payload       = cache->getLineAlignedAddress(payload);
@@ -504,7 +504,7 @@ void MSI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned i
     addNewMaxPriorityBusRequest(r);
 }
 
-bool MSI_Controller::awaitingDataRemote(unsigned int address) {
+bool MSI_Controller::awaitingDataRemote(unsigned long long address) {
     assert(dispatchedBusRead != NULL);
     return (((cache->getLineAlignedAddress(currentInstruction->ADDRESS)) == address) && awaitingBusRead);
 }

@@ -14,7 +14,7 @@
 class CacheLine {
     
 private:
-    unsigned int tag;
+    unsigned long long tag;
     unsigned int tagMask;
     unsigned int lru_bits;
     unsigned int lruMask;
@@ -66,12 +66,12 @@ private:
     /* @c getTag
      * @return Returns tag bits for line
      */
-    unsigned int getTag(void);
+    unsigned long long getTag(void);
 
     /* @c setTag
      * @result Sets the tag bits for the line
      */
-    void setTag (unsigned int t);
+    void setTag (unsigned long long t);
     
     /* @c getLRU
      * @return Returns LRU bits for line

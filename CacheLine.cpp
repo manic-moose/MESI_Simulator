@@ -46,11 +46,11 @@ unsigned int CacheLine::getLineNumber() {
     return lineNum;
 }
 
-unsigned int CacheLine::getTag() {
+unsigned long long CacheLine::getTag() {
     return tag;
 }
 
-void CacheLine::setTag (unsigned int t) {
+void CacheLine::setTag (unsigned long long t) {
     tag = tagMask & t;
 }
 

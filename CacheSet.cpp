@@ -18,7 +18,7 @@ unsigned int CacheSet::getSetNumber(void) {
     return setNumber;
 }
 
-bool CacheSet::contains(unsigned int tag) {
+bool CacheSet::contains(unsigned long long tag) {
     for (vector<CacheLine*>::iterator it = lineArry.begin(); it < lineArry.end(); it++) {
         CacheLine* line = (*it);
         if (line->isValid() && line->tagMatches(tag)) {
@@ -28,14 +28,14 @@ bool CacheSet::contains(unsigned int tag) {
     return false;
 }
 
-void CacheSet::streamIn (CacheLine* line, unsigned int tag) {
+void CacheSet::streamIn (CacheLine* line, unsigned long long tag) {
     line->setValid(true);
     line->setDirty(false);
     line->setTag(tag);
     updateLRU(line);
 }
 
-void CacheSet::insertLine(unsigned int tag) {
+void CacheSet::insertLine(unsigned long long tag) {
     CacheLine* line = getEmptyLine();
     assert(line != NULL);
     streamIn(line,tag);
@@ -51,7 +51,7 @@ CacheLine* CacheSet::getEmptyLine(void) {
     return NULL;
 }
 
-void CacheSet::updateLRU(unsigned int tag) {
+void CacheSet::updateLRU(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     updateLRU(line);
 }
@@ -124,7 +124,7 @@ void CacheSet::checkAndFixLRU(void) {
     }
 }
 
-CacheLine* CacheSet::invalidate(unsigned int tag) {
+CacheLine* CacheSet::invalidate(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     return invalidate(line);
 }
@@ -136,7 +136,7 @@ CacheLine* CacheSet::invalidate(CacheLine* line) {
     return line;
 }
 
-CacheLine* CacheSet::getLine(unsigned int tag) {
+CacheLine* CacheSet::getLine(unsigned long long tag) {
     assert(contains(tag));
     for (vector<CacheLine*>::iterator it = lineArry.begin(); it < lineArry.end(); it++) {
         CacheLine* line = (*it);
@@ -181,42 +181,42 @@ bool CacheSet::isFull(void) {
     return true;
 }
 
-bool CacheSet::isExclusive(unsigned int tag) {
+bool CacheSet::isExclusive(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     return line->isExclusive();
 }
 
-bool CacheSet::isModified(unsigned int tag) {
+bool CacheSet::isModified(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     return line->isModified();
 }
 
-bool CacheSet::isShared(unsigned int tag) {
+bool CacheSet::isShared(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     return line->isShared();
 }
 
-bool CacheSet::isInvalid(unsigned int tag) {
+bool CacheSet::isInvalid(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     line->isInvalid();
 }
 
-void CacheSet::setExclusive(unsigned int tag) {
+void CacheSet::setExclusive(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     line->setMESI(EXCLUSIVE);
 }
 
-void CacheSet::setModified(unsigned int tag) {
+void CacheSet::setModified(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     line->setMESI(MODIFIED);
 }
 
-void CacheSet::setShared(unsigned int tag) {
+void CacheSet::setShared(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     line->setMESI(SHARED);
 }
 
-void CacheSet::setInvalid(unsigned int tag) {
+void CacheSet::setInvalid(unsigned long long tag) {
     CacheLine* line = getLine(tag);
     line->setMESI(INVALID);
 }

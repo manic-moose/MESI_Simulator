@@ -14,7 +14,7 @@ int main (void) {
 
     c->contains(0);
     
-    unsigned int adx = 1234506720;
+    unsigned long long adx = 47571234506720;
     
     cout << "Adx: " << adx << " Set Number: " << c->getAdxSetNum(adx) << " Tag: " << c->getTag(adx) << endl;
     

@@ -64,7 +64,7 @@ protected:
     // This will invalidate a line in the cache that maps
     // to memoryAdx. If the line is dirty, it will also
     // issue a bus write for the memory address.
-    void invalidateCacheItem(unsigned int memoryAdx);
+    void invalidateCacheItem(unsigned long long memoryAdx);
     
     bool bursting;
     unsigned int burstLen;
@@ -84,13 +84,13 @@ protected:
     bool hasQueuedBusRequest(void);  // Indicates there are BusRequests waiting in the bus request queue for issue to the bus
     
     // Checks the bus request queue for any BusRequests that have the given properties
-    bool hasBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload);
+    bool hasBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned long long payload);
     
     // Returns the bust request from the bus request queue for any instructions with the given properties
-    BusRequest* getBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload);
+    BusRequest* getBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned long long payload);
     
     // Deletes any bus requests from the bus request queue with the given properties
-    void deleteBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload);
+    void deleteBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned long long payload);
     
     // Adds new bus request to the end of the bus request queue
     void addNewBusRequest(BusRequest* r);
@@ -99,7 +99,7 @@ protected:
     // Searches through the bus request queue/next to issue and cancels
     // the first request it find matching the given
     // command code and payload.
-    void cancelBusRequest(unsigned int commandCode, unsigned int payload);
+    void cancelBusRequest(unsigned int commandCode, unsigned long long payload);
     
    
     void updateBusBurstRequest(void);

@@ -12,12 +12,12 @@ bool CacheController::hasQueuedBusRequest(void) {
     return (busReqQueue->size() > 0) || (maxPriorityQueue->size() > 0);
 }
 
-bool CacheController::hasBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload) {
+bool CacheController::hasBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned long long payload) {
     BusRequest* r = getBusRequestWithParams(code,target,source,payload);
     return (r != NULL);
 }
 
-BusRequest* CacheController::getBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload) {
+BusRequest* CacheController::getBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned long long payload) {
     for (vector<BusRequest*>::iterator it = busReqQueue->begin(); it < busReqQueue->end(); it++) {
         BusRequest* r = (*it);
         if (r->commandCode == code && r->targetAddress == target && r->sourceAddress == source && r->payload == payload) {
@@ -27,7 +27,7 @@ BusRequest* CacheController::getBusRequestWithParams(unsigned int code, unsigned
     return NULL;
 }
 
-void CacheController::deleteBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned int payload) {
+void CacheController::deleteBusRequestWithParams(unsigned int code, unsigned int target, unsigned int source, unsigned long long payload) {
     for (vector<BusRequest*>::iterator it = busReqQueue->begin(); it < busReqQueue->end(); it++) {
         BusRequest* r = (*it);
         if (r->commandCode == code && r->targetAddress == target && r->sourceAddress == source && r->payload == payload) {
@@ -54,7 +54,7 @@ BusRequest* CacheController::initiateBusTransaction(void) {
         nextToIssue = busReqQueue->back();
     }
     unsigned int code = nextToIssue->commandCode;
-    unsigned int payload = nextToIssue->payload;
+    unsigned long long payload = nextToIssue->payload;
     if (bursting) {
         if (hasLock()) {
             burstCounter++;   
@@ -119,7 +119,7 @@ bool CacheController::hasPendingInstruction(void) {
     return pendingInstructionFlag;   
 }
 
-void CacheController::invalidateCacheItem(unsigned int memoryAdx) {
+void CacheController::invalidateCacheItem(unsigned long long memoryAdx) {
     assert(cache->contains(memoryAdx));
     CacheLine* line = cache->invalidate(memoryAdx);
     if (line->isDirty()) {
@@ -140,7 +140,7 @@ void CacheController::handleMemoryAccess(Instruction* i) {
     assert(!hasPendingInstruction());
     
     currentInstruction = i;
-    unsigned int address = cache->getLineAlignedAddress(i->ADDRESS);
+    unsigned long long address = cache->getLineAlignedAddress(i->ADDRESS);
     if (i->OPCODE == STORE_CMD) {
         cout << "Controller: " << getAddress() << " Code: INSTRUCTION STORE  Payload: " << address << endl;
     } else if (i->OPCODE == LOAD_CMD) {
@@ -177,7 +177,7 @@ void CacheController::Tick(void) {
     updateBusBurstRequest();
 }
 
-void CacheController::cancelBusRequest(unsigned int commandCode, unsigned int payload) {
+void CacheController::cancelBusRequest(unsigned int commandCode, unsigned long long payload) {
     for (vector<BusRequest*>::iterator it = busReqQueue->begin(); it < busReqQueue->end(); it++) {
         BusRequest* r = (*it);
         if ((r->commandCode == commandCode) && (r->payload == payload)) {

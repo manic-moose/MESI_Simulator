@@ -3,7 +3,7 @@
 
 #include "CacheController.h"
 
-#define ADX_LEN 32
+#define ADX_LEN 64
 #define NUM_SETS 1024
 #define LINES_PER_SET 4
 #define BYTES_PER_LINE 32
@@ -34,7 +34,7 @@ private:
     // so that in the BUSREAD/BUSREADX states, multiple reads are not issued
     bool queuedBusRead;
     bool awaitingDataLocal;
-    unsigned int awaitingDataLocal_Address;
+    unsigned long long awaitingDataLocal_Address;
     
     typedef enum E_STATES {
         IDLE_STATE,
@@ -72,8 +72,8 @@ private:
     void UpdateCacheStore_Action(void);
     
     // Broadcast a bus request with given command code and payload
-    void queueBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx=BROADCAST_ADX);
-    void queueMaxPriorityBusCommand(unsigned int command, unsigned int payload, unsigned int targetAdx=BROADCAST_ADX);
+    void queueBusCommand(unsigned int command, unsigned long long payload, unsigned int targetAdx=BROADCAST_ADX);
+    void queueMaxPriorityBusCommand(unsigned int command, unsigned long long payload, unsigned int targetAdx=BROADCAST_ADX);
     
     // Methods to handle incoming communications
     void handleBusRead(BusRequest* d);
@@ -84,7 +84,7 @@ private:
     
     // Returns true if a bus read request was issued
     // to the given address.
-    bool awaitingDataRemote(unsigned int address);
+    bool awaitingDataRemote(unsigned long long address);
     
 public:
     
