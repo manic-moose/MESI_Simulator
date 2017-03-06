@@ -118,14 +118,15 @@ int main( int argc, char **argv ) {
 
     // Open the files for reading
     for( int i = 0; i < num_procs; i++ ) {
-      sprintf( filesuffix, "%d", i );
-      strcpy( filename[i], strcat( fileprefix, filesuffix ) );
-      myfiles[i] = fopen( filename[i], "r" );
-      if( myfiles[i] == NULL ) {
-          printf( "ERROR: File %s failed to open. Exiting...\n", filename[i] );
-        return -1;
-      }
-      fileprefix[strlen(fileprefix)-1] = '\0'; // Delete end character
+        int suffixSize = 0;
+        sprintf( filesuffix, "%d", i );
+        strcpy( filename[i], strcat( fileprefix, filesuffix ) );
+        myfiles[i] = fopen( filename[i], "r" );
+        if( myfiles[i] == NULL ) {
+            printf( "ERROR: File %s failed to open. Exiting...\n", filename[i] );
+            return -1;
+        }
+        fileprefix[strlen(fileprefix)-strlen(filesuffix)] = '\0'; // Delete end character
     }
     
     cout << "Starting simulation with the following system parameters:" << endl;
