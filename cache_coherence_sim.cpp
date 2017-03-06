@@ -106,6 +106,11 @@ int main( int argc, char **argv ) {
     }
     FILE** myfiles = new FILE*[num_procs];
 
+    bool* eofChecker = new bool[num_procs];
+    for (int i = 0; i < num_procs; i++) {
+        eofChecker[i] = false;   
+    }
+    
     if( file_flag == false ) {
       printf( "File prefix not supplied. Please see help with \"-h\" for options.\n" );
       return -1;
@@ -113,7 +118,7 @@ int main( int argc, char **argv ) {
 
     // Open the files for reading
     for( int i = 0; i < num_procs; i++ ) {
-      sprintf( filesuffix, "%d", (i+1) );
+      sprintf( filesuffix, "%d", i );
       strcpy( filename[i], strcat( fileprefix, filesuffix ) );
       myfiles[i] = fopen( filename[i], "r" );
       if( myfiles[i] == NULL ) {
@@ -144,7 +149,8 @@ int main( int argc, char **argv ) {
         // Make sure we have not reached EOF on any of our files
         for( int i = 0; i < num_procs; i++ ) {
             if( feof( myfiles[i] ) ) {
-              break; // Exit out of while loop if end-of-file reached on any file
+              //break; // Exit out of while loop if end-of-file reached on any file
+                eofChecker[i] = true;
             }
         }
         // Loop over each processor and give it an instruction.
@@ -157,11 +163,18 @@ int main( int argc, char **argv ) {
             // instruction finishes.
             if (!(s->hasPendingInstructions(pNum))) {
                 // Read in new instruction from file
-                 fscanf( myfiles[pNum], "%llx %c\n", &nextaddress, &nextop );
-                assert( nextop == 'r' || nextop == 'w' );
-          
+                if (eofChecker[pNum]) {
+                    nextop = 'n';
+                    nextaddress = 0;
+                } else {
+                    fscanf( myfiles[pNum], "%llx %c\n", &nextaddress, &nextop );
+                }
                 Instruction* inst = new Instruction;
-                inst->OPCODE  = (nextop == 'r') ? 0 : 1;
+                if (nextop == 'r' || nextop == 'w' ) {
+                    inst->OPCODE  = (nextop == 'r') ? LOAD_CMD : STORE_CMD;
+                } else {
+                    inst->OPCODE = NOP_CMD;
+                }
                 inst->ADDRESS = nextaddress;
                 cout << "Instruction Insert - " << "P" << pNum << " OPCODE: " << inst->OPCODE << "  Address: " << inst->ADDRESS << endl;
                 // Queues up the instruction for the processor
