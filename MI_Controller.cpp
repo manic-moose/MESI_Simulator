@@ -418,6 +418,9 @@ void MI_Controller::queueMaxPriorityBusCommand(unsigned int command, unsigned lo
 }
 
 bool MI_Controller::awaitingDataRemote(unsigned long long address) {
-    assert(dispatchedBusRead != NULL);
-    return (((cache->getLineAlignedAddress(currentInstruction->ADDRESS)) == address) && awaitingBusRead);
+    if (dispatchedBusRead == NULL) {
+        return false;
+    } else {
+        return (((cache->getLineAlignedAddress(currentInstruction->ADDRESS)) == address) && awaitingBusRead);
+    }
 }
