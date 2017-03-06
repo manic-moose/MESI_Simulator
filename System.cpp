@@ -62,7 +62,11 @@ void System::reportMemoryOpStatistics(void) {
         Processor* p = processors->at(i);
         unsigned long numOps = p->getTotalMemoryOps();
         double averageMemoryWait = p->getAverageMemoryLatency();
-        overallAvgLatency += averageMemoryWait*((double)numOps)/((double)sum);
+        if (averageMemoryWait == averageMemoryWait) {
+            // conditional verifies this is not a "NaN" value in case
+            // this processor never received any memory requests
+            overallAvgLatency += averageMemoryWait*((double)numOps)/((double)sum);
+        }
     }
     double finalHitRate = 100.0*((double)totalHits)/((double)totalHits+totalMisses);
     cout << "Summary:" << endl;
