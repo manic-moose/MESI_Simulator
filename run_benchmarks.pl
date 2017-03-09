@@ -357,8 +357,8 @@ sub generateCSV ($) {
             $logData->{processorCount} = $pCount;
             $logData->{controllerType} = $cType;
             $csvData->{"simulation_${i}"} = $logData;
+            $i++;
         }
-        $i++;
     }
     writeCsvFile($options,$csvData);
     
