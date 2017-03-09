@@ -321,7 +321,7 @@ void MI_Controller::handleBusRead(BusRequest* d) {
     assert(0);
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
-            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
+            queueMaxPriorityBusCommand(DATA_RETURN_PROCESSOR, address);
         } else if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
@@ -345,7 +345,7 @@ void MI_Controller::handleBusReadX(BusRequest* d) {
     unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
-            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
+            queueMaxPriorityBusCommand(DATA_RETURN_PROCESSOR, address);
         } else if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }

@@ -149,7 +149,8 @@ MSI_Controller::STATES MSI_Controller::CheckCacheStore_Transition(void) {
         bool isShared   = cache->isShared(address);
         
         // Assert that one of the other three states are true
-        assert(isExclusive || isModified || isShared);
+        assert(isModified || isShared);
+        assert(!isExclusive); // MSI so exclusive does not exist
         
         if (isModified || isExclusive) {
             // We have the only copy, so we can freely update
@@ -330,6 +331,8 @@ void MSI_Controller::UpdateCacheStore_Action(void) {
     } else {
         if (!cache->isModified(address)) {
             cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
+            cache->setModified(address);
+            assert(cache->isModified(address));
         }
     }
     cache->updateLRU(address);
@@ -390,7 +393,7 @@ void MSI_Controller::handleBusRead(BusRequest* d) {
     unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
-            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
+            queueMaxPriorityBusCommand(DATA_RETURN_PROCESSOR, address);
         } else if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
@@ -415,7 +418,7 @@ void MSI_Controller::handleBusReadX(BusRequest* d) {
     unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
-            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
+            queueMaxPriorityBusCommand(DATA_RETURN_PROCESSOR, address);
         } else if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }

@@ -330,6 +330,8 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
     } else {
         if (!cache->isModified(address)) {
             cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
+            cache->setModified(address);
+            assert(cache->isModified(address));
         }
     }
     cache->updateLRU(address);
@@ -390,7 +392,7 @@ void MESI_Controller::handleBusRead(BusRequest* d) {
     unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
-            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
+            queueMaxPriorityBusCommand(DATA_RETURN_PROCESSOR, address);
         } else if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
@@ -415,7 +417,7 @@ void MESI_Controller::handleBusReadX(BusRequest* d) {
     unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (cache->isExclusive(address) || cache->isShared(address)) {
-            queueBusCommand(DATA_RETURN_PROCESSOR, address, BROADCAST_ADX);
+            queueMaxPriorityBusCommand(DATA_RETURN_PROCESSOR, address);
         } else if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
