@@ -55,12 +55,15 @@ void Memory::Tick(void) {
             bursting = false;
             burstCounter = 0;
         } else {
-            BusRequest* nullBurst = new BusRequest;
-            nullBurst->commandCode = NULL_BURST;
-            nullBurst->targetAddress = BROADCAST_ADX;
-            nullBurst->sourceAddress = getAddress();
-            nullBurst->payload = burstRequest->payload;
-            busReqQueue->push(nullBurst);
+            if (hasLock()) {
+                // Only issue a burst if Memory has been granted the lock
+                BusRequest* nullBurst = new BusRequest;
+                nullBurst->commandCode = NULL_BURST;
+                nullBurst->targetAddress = BROADCAST_ADX;
+                nullBurst->sourceAddress = getAddress();
+                nullBurst->payload = burstRequest->payload;
+                busReqQueue->push(nullBurst);
+            }
         }
         if (hasLock()) {
             // Only increment if the lock has been granted
