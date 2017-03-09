@@ -211,6 +211,39 @@ void CacheController::cancelBusRequest(unsigned int commandCode, unsigned long l
             return;
         }
     }
+    for (vector<BusRequest*>::iterator it = maxPriorityQueue->begin(); it < maxPriorityQueue->end(); it++) {
+        BusRequest* r = (*it);
+        if ((r->commandCode == commandCode) && (r->payload == payload)) {
+            switch (commandCode) {
+                case BUSREAD:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREAD                Payload: " << payload << endl;
+                    break;
+                case BUSREADX:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREADX               Payload: " << payload << endl;
+                    break;
+                case BUSWRITE:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSWRITE               Payload: " << payload << endl;
+                    break;
+                case DATA_RETURN_MEMORY:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_MEMORY     Payload: " << payload << endl;
+                    break;
+                case DATA_RETURN_PROCESSOR:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
+                    break;
+                case INVALIDATE:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_INVALIDATE             Payload: " << payload << endl;
+                    break;
+                case NULL_BURST:
+                    cout << "Controller: " << getAddress() << " Code: CANCEL_NULL_BURST             Payload: " << payload << endl;
+                    break;
+                case SHAREME:
+                    cout << "Controller: " << getAddress() << " Code: SHAREME                       Payload: " << payload << endl;
+                    break;
+            }
+            maxPriorityQueue->erase(it);
+            return;
+        }
+    }
 }
 
 unsigned long CacheController::getStoreHits(void) {
