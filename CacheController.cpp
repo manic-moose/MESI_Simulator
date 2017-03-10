@@ -84,25 +84,25 @@ BusRequest* CacheController::initiateBusTransaction(void) {
     code = nextToIssue->commandCode; // Update in case next is actually a null burst
     switch (code) {
         case BUSREAD:
-            cout << "Controller: " << getAddress() << " Code: BUSREAD                Payload: " << payload << endl;
+            //cout << "Controller: " << getAddress() << " Code: BUSREAD                Payload: " << payload << endl;
             break;
         case BUSREADX:
-            cout << "Controller: " << getAddress() << " Code: BUSREADX               Payload: " << payload << endl;
+            //cout << "Controller: " << getAddress() << " Code: BUSREADX               Payload: " << payload << endl;
             break;
         case BUSWRITE:
-            cout << "Controller: " << getAddress() << " Code: BUSWRITE               Payload: " << payload << endl;
+            //cout << "Controller: " << getAddress() << " Code: BUSWRITE               Payload: " << payload << endl;
             break;
         case DATA_RETURN_MEMORY:
-            cout << "Controller: " << getAddress() << " Code: DATA_RETURN_MEMORY     Payload: " << payload << endl;
+            //cout << "Controller: " << getAddress() << " Code: DATA_RETURN_MEMORY     Payload: " << payload << endl;
             break;
         case DATA_RETURN_PROCESSOR:
-            cout << "Controller: " << getAddress() << " Code: DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
+            //cout << "Controller: " << getAddress() << " Code: DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
             break;
         case INVALIDATE:
-            cout << "Controller: " << getAddress() << " Code: INVALIDATE             Payload: " << payload << endl;
+            //cout << "Controller: " << getAddress() << " Code: INVALIDATE             Payload: " << payload << endl;
             break;
         case NULL_BURST:
-            cout << "Controller: " << getAddress() << " Code: NULL_BURST             Payload: " << payload << endl;
+            //cout << "Controller: " << getAddress() << " Code: NULL_BURST             Payload: " << payload << endl;
             break;
     }
     if ((nextToIssue->commandCode == BUSREAD) || nextToIssue->commandCode == BUSREADX) {
@@ -142,9 +142,9 @@ void CacheController::handleMemoryAccess(Instruction* i) {
     currentInstruction = i;
     unsigned long long address = cache->getLineAlignedAddress(i->ADDRESS);
     if (i->OPCODE == STORE_CMD) {
-        cout << "Controller: " << getAddress() << " Code: INSTRUCTION STORE  Payload: " << address << endl;
+        //cout << "Controller: " << getAddress() << " Code: INSTRUCTION STORE  Payload: " << address << endl;
     } else if (i->OPCODE == LOAD_CMD) {
-        cout << "Controller: " << getAddress() << " Code: INSTRUCTION LOAD  Payload: " << address << endl;
+        //cout << "Controller: " << getAddress() << " Code: INSTRUCTION LOAD  Payload: " << address << endl;
     }
     pendingInstructionFlag = true;
 }
@@ -183,28 +183,28 @@ void CacheController::cancelBusRequest(unsigned int commandCode, unsigned long l
         if ((r->commandCode == commandCode) && (r->payload == payload)) {
             switch (commandCode) {
                 case BUSREAD:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREAD                Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREAD                Payload: " << payload << endl;
                     break;
                 case BUSREADX:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREADX               Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREADX               Payload: " << payload << endl;
                     break;
                 case BUSWRITE:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSWRITE               Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_BUSWRITE               Payload: " << payload << endl;
                     break;
                 case DATA_RETURN_MEMORY:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_MEMORY     Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_MEMORY     Payload: " << payload << endl;
                     break;
                 case DATA_RETURN_PROCESSOR:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
                     break;
                 case INVALIDATE:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_INVALIDATE             Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_INVALIDATE             Payload: " << payload << endl;
                     break;
                 case NULL_BURST:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_NULL_BURST             Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_NULL_BURST             Payload: " << payload << endl;
                     break;
                 case SHAREME:
-                    cout << "Controller: " << getAddress() << " Code: SHAREME                       Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: SHAREME                       Payload: " << payload << endl;
                     break;
             }
             busReqQueue->erase(it);
@@ -216,28 +216,28 @@ void CacheController::cancelBusRequest(unsigned int commandCode, unsigned long l
         if ((r->commandCode == commandCode) && (r->payload == payload)) {
             switch (commandCode) {
                 case BUSREAD:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREAD                Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREAD                Payload: " << payload << endl;
                     break;
                 case BUSREADX:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREADX               Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_BUSREADX               Payload: " << payload << endl;
                     break;
                 case BUSWRITE:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_BUSWRITE               Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_BUSWRITE               Payload: " << payload << endl;
                     break;
                 case DATA_RETURN_MEMORY:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_MEMORY     Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_MEMORY     Payload: " << payload << endl;
                     break;
                 case DATA_RETURN_PROCESSOR:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_DATA_RETURN_PROCESSOR  Payload: " << payload << endl;
                     break;
                 case INVALIDATE:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_INVALIDATE             Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_INVALIDATE             Payload: " << payload << endl;
                     break;
                 case NULL_BURST:
-                    cout << "Controller: " << getAddress() << " Code: CANCEL_NULL_BURST             Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: CANCEL_NULL_BURST             Payload: " << payload << endl;
                     break;
                 case SHAREME:
-                    cout << "Controller: " << getAddress() << " Code: SHAREME                       Payload: " << payload << endl;
+                    //cout << "Controller: " << getAddress() << " Code: SHAREME                       Payload: " << payload << endl;
                     break;
             }
             maxPriorityQueue->erase(it);

@@ -3,7 +3,8 @@
 using namespace std;
 
 void System::Tick(void) {
-    cout << " ************************ TICK " << tickNumber++ << " ************************" << endl;
+//    cout << " ************************ TICK " << tickNumber++ << " ************************" << endl;
+    tickNumber++;
     for (int i = processors->size() - 1; i >=0 ; i--) {
         Processor* p = processors->at(i);
         //cout << "Processor " << i << "->Tick()...";

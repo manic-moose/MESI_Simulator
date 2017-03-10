@@ -77,9 +77,9 @@ void MI_Controller::transitionState(void) {
     //reportState();
     STATES nextState = getNextState();
     currentState = nextState;
-    cout << getAddress() << " ";
-    reportState();
-    cout << endl;
+    //cout << getAddress() << " ";
+    //reportState();
+    //cout << endl;
     callActionFunction();
 }
 

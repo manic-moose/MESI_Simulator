@@ -255,16 +255,16 @@ void MSI_Controller::UpdateCacheLoad_Action(void) {
         }
         cache->insertLine(address);
         if (sawBusReadToMyIncomingAddress) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
+            //cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
             cache->setShared(address);
         } else if (gotDataReturnFromBusRead_Memory) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
+            //cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
             cache->setShared(address);
         } else if (gotDataReturnFromBusRead_Processor) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
+            //cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
             cache->setShared(address);
         } else {
-            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
+            //cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
             //snoopedDataReturnFromWriteback
             cache->setShared(address);
         }
@@ -325,13 +325,13 @@ void MSI_Controller::UpdateCacheStore_Action(void) {
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
-        cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
+        //cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
         cache->insertLine(address);   
         cache->setModified(address);
         assert(cache->isModified(address));
     } else {
         if (!cache->isModified(address)) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
+            //cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
             cache->setModified(address);
             assert(cache->isModified(address));
         }
@@ -371,7 +371,7 @@ void MSI_Controller::handleShareMe(BusRequest* d) {
     unsigned long long address = d->payload;
     if (cache->contains(address)) {
         if (!cache->isShared(address)) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_0  Payload: " << address << endl;
+            //cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_0  Payload: " << address << endl;
             cache->setShared(address);
         }
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
@@ -399,7 +399,7 @@ void MSI_Controller::handleBusRead(BusRequest* d) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
         if (!cache->isShared(address)) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_1  Payload: " << address << endl;
+            //cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_1  Payload: " << address << endl;
         }
         cache->setShared(address);
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
@@ -423,7 +423,7 @@ void MSI_Controller::handleBusReadX(BusRequest* d) {
         } else if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
-        cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
+        //cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
         cache->invalidate(address);
         assert(!cache->contains(address));
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
@@ -482,7 +482,7 @@ void MSI_Controller::handleInvalidate(BusRequest* d) {
         if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);   
         }
-        cout << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_1  Payload: " << address << endl;
+        //cout << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_1  Payload: " << address << endl;
         cache->invalidate(address);
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
         // We've queued up a read command to that address...

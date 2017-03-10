@@ -177,7 +177,7 @@ int main( int argc, char **argv ) {
                     inst->OPCODE = NOP_CMD;
                 }
                 inst->ADDRESS = nextaddress;
-                cout << "Instruction Insert - " << "P" << pNum << " OPCODE: " << inst->OPCODE << "  Address: " << inst->ADDRESS << endl;
+                //cout << "Instruction Insert - " << "P" << pNum << " OPCODE: " << inst->OPCODE << "  Address: " << inst->ADDRESS << endl;
                 // Queues up the instruction for the processor
                 s->insertInstruction(inst,pNum);
             }

@@ -15,7 +15,7 @@ void Memory::acceptBusTransaction(BusRequest* d) {
         for (unsigned int i = 0; i < memTracker->size(); i++) {
             MemoryOperation* p = memTracker->at(i);
             if (p->address == payloadValue) {
-                cout << "MEMORY Code: CANCEL_MEM_RETURN  Payload: " << payloadValue << endl;
+                //cout << "MEMORY Code: CANCEL_MEM_RETURN  Payload: " << payloadValue << endl;
                 memTracker->erase(memTracker->begin() + i);
                 return;
             }
@@ -28,11 +28,11 @@ BusRequest* Memory::initiateBusTransaction(void) {
     BusRequest* nextRequest = busReqQueue->front();
     unsigned int code = nextRequest->commandCode;
     if (code == DATA_RETURN_MEMORY) {
-        cout << "MEMORY Code: DATA_RETURN_MEMORY            Payload: " << nextRequest->payload << endl;
+        //cout << "MEMORY Code: DATA_RETURN_MEMORY            Payload: " << nextRequest->payload << endl;
     } else if (code == NULL_BURST) {
-        cout << "MEMORY Code: NULL_BURST                    Payload: " << nextRequest->payload << endl;
+        //cout << "MEMORY Code: NULL_BURST                    Payload: " << nextRequest->payload << endl;
     } else {
-        cout << "MEMORY Code: UNHANDLED  CODE: " << code << "  Payload: " << nextRequest->payload << endl;
+        //cout << "MEMORY Code: UNHANDLED  CODE: " << code << "  Payload: " << nextRequest->payload << endl;
     }
     busReqQueue->pop();
     memSendCounts++;
@@ -48,7 +48,7 @@ bool Memory::requestsLock(void) {
 }
 
 void Memory::Tick(void) {
-    cout << "Current Memory Ops Count " << (memTracker->size()) << endl;
+    //cout << "Current Memory Ops Count " << (memTracker->size()) << endl;
     if (bursting) {
         if (burstCounter == burstLen - 1) {
             busReqQueue->push(burstRequest);
