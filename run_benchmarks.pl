@@ -446,8 +446,6 @@ sub parseSimLog ($) {
     my ($logFile) = @_;
     info("Parsing Logfile: $logFile");
     open(my $fh, "<", $logFile) or fatal("Could not open $logFile for reading.");
-    my @lines = <$fh>;
-    close($fh);
     my $logData = {};
   
     
@@ -455,10 +453,7 @@ sub parseSimLog ($) {
     my $processorNumber = undef;
     my $simCycles = 0;
     
-    
-    my $i = 0;
-    while ($i < scalar(@lines)) {
-        my $line = $lines[$i];
+    while (my $line = <$fh>) {
         chomp($line);
         $line =~ s/^\s+//;
         $line =~ s/\s+$//;
@@ -506,7 +501,6 @@ sub parseSimLog ($) {
         } else {
             fatal("Invalid state: $state");
         }
-        $i++;
     }
     
     return $logData;
