@@ -83,9 +83,9 @@ void MSI_Controller::callActionFunction(void) {
 void MSI_Controller::transitionState(void) {
     STATES nextState = getNextState();
     currentState = nextState;
-    cout << getAddress() << " ";
-    reportState();
-    cout << endl;
+//    cout << getAddress() << " ";
+//    reportState();
+//    cout << endl;
     callActionFunction();
 }
 
@@ -258,7 +258,7 @@ void MSI_Controller::UpdateCacheLoad_Action(void) {
             cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
             cache->setShared(address);
         } else if (gotDataReturnFromBusRead_Memory) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_EXCLUSIVE  Payload: " << address << endl;
+            cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
             cache->setShared(address);
         } else if (gotDataReturnFromBusRead_Processor) {
             cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_SHARED  Payload: " << address << endl;
@@ -309,6 +309,7 @@ void MSI_Controller::UpdateCacheStore_Action(void) {
     if (sawBusReadToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
         // Saw an operation to this address while waiting for data to return. Instead of updating the cache,
         // a write request is issued to memory immediately. No actionst to take here
+        queueMaxPriorityBusCommand(BUSWRITE,address);
         return;
     }
     if (!cache->contains(address)) {
@@ -443,10 +444,6 @@ void MSI_Controller::handleBusWrite(BusRequest* d) {
         awaitingBusRead                = false;
         awaitingDataLocal              = false;
     }
-    if (cache->contains(address)) {
-        cout << "Detected failure in controller: " << getAddress() << " Write to address " << address << " that I own" << endl;   
-    }
-    assert(!cache->contains(address));
 }
 
 void MSI_Controller::handleDataReturnMemory(BusRequest* d) {

@@ -308,6 +308,7 @@ void MESI_Controller::UpdateCacheStore_Action(void) {
     if (sawBusReadToMyIncomingAddress || sawBusReadXToMyIncomingAddress || sawInvalidateToMyIncomingAddress) {
         // Saw an operation to this address while waiting for data to return. Instead of updating the cache,
         // a write request is issued to memory immediately. No actionst to take here
+        queueMaxPriorityBusCommand(BUSWRITE,address);
         return;
     }
     if (!cache->contains(address)) {
@@ -442,10 +443,6 @@ void MESI_Controller::handleBusWrite(BusRequest* d) {
         awaitingBusRead                = false;
         awaitingDataLocal              = false;
     }
-    if (cache->contains(address)) {
-        cout << "Detected failure in controller: " << getAddress() << " Write to address " << address << " that I own" << endl;   
-    }
-    assert(!cache->contains(address));
 }
 
 void MESI_Controller::handleDataReturnMemory(BusRequest* d) {
