@@ -223,7 +223,7 @@ void MI_Controller::UpdateCacheLoad_Action(void) {
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
-        cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
+        //cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
         cache->insertLine(address);
         cache->setModified(address);
     }
@@ -272,13 +272,13 @@ void MI_Controller::UpdateCacheStore_Action(void) {
                 queueMaxPriorityBusCommand(BUSWRITE,evictedLineAdx);
             }
         }
-        cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
+        //cout << "Controller: " << getAddress() << " Code: CACHE_INSERT_MODIFIED  Payload: " << address << endl;
         cache->insertLine(address);   
         cache->setModified(address);
         assert(cache->isModified(address));
     } else {
         if (!cache->isModified(address)) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
+//            cout << "Controller: " << getAddress() << " Code: CACHE_UPGRADE_MODIFIED  Payload: " << address << endl;
         }
     }
     cache->updateLRU(address);
@@ -327,7 +327,7 @@ void MI_Controller::handleBusRead(BusRequest* d) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
         if (!cache->isShared(address)) {
-            cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_1  Payload: " << address << endl;
+            //cout << "Controller: " << getAddress() << " Code: CACHE_DOWNGRADE_SHARED_1  Payload: " << address << endl;
         }
         cache->setShared(address);
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
@@ -350,7 +350,7 @@ void MI_Controller::handleBusReadX(BusRequest* d) {
         } else if (cache->isModified(address)) {
             queueMaxPriorityBusCommand(BUSWRITE, address);
         }
-        cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
+        //cout << endl << "Controller: " << getAddress() << " Code: CACHE_INVALIDATE_0  Payload: " << address << endl;
         cache->invalidate(address);
         assert(!cache->contains(address));
     } else if (awaitingDataLocal && (awaitingDataLocal_Address == address)) {
