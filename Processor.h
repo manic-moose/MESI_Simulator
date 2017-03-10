@@ -26,6 +26,8 @@ private:
     CacheController* cacheController;
     queue<Instruction*>* instrQueue;
     
+    Instruction* processingInst;
+    
     unsigned long numberMemoryOperations;
     unsigned long totalWaitCycles;
     

@@ -22,11 +22,15 @@ void Processor::reportState(void) {
 }
 
 void Processor::Idle_Action(void) {
-    // No actions required
+    if (processingInst != NULL) {
+        delete processingInst;
+        processingInst = NULL;
+    }
 }
 
 void Processor::CheckOpType_Action(void) {
     Instruction* i = getNextInstruction();
+    processingInst = i;
     if (i->OPCODE == LOAD_CMD || i->OPCODE == STORE_CMD) {
         // Send the memory instruction to the cache
         // controller for processing.
