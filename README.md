@@ -5,6 +5,7 @@ This simulator accepts traces of input files and simulates performance of MESI,M
 for N processors.
 
 ====================================
+
 COMPILING THE CODE
 To compile the code, the provided makefile can be used. Simply run "make" in this directory
 and the compiler will generate "cache_coherence_sim" as the executable.
@@ -14,6 +15,7 @@ CacheParams.h
 
 If you wish to modify the cache parameters, edit this file and recompile the executable.
 ====================================
+
 RUNNING THE SIMULATOR
 
 There are two methods that can be used to run the simulator. You can simply
@@ -49,6 +51,7 @@ SUMMARY.csv that combines all data into a single spreadsheet.
 Use "./run_benchmark.pl -h" for a list of additional options that can be used to customize the simulation's execution.
 
 ====================================
+
 GENERATING TRACE FILES
 
 The included pin-3.2-81205-gcc-linux directory is third party software designed to allow profiling
