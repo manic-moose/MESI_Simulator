@@ -60,6 +60,9 @@ Use "./run_benchmark.pl -h" for a list of additional options that can be used to
 GENERATING TRACE FILES
 ---------------------
 
+********** NOTE: This release package excludes the pin tool directory due to size on the disk
+**********       being to large to deliver via email.
+
 The included pin-3.2-81205-gcc-linux directory is third party software designed to allow profiling
 of software.
 
